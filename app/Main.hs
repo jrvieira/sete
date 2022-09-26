@@ -160,13 +160,12 @@ catch _ st (KeyPress k) = st' { ι = k }
 
 step :: State -> State
 step st
-   | Play <- μ st , Terra <- σ st = st { ν = terra <$> ν st }
-   | Play <- μ st , Dois  <- σ st = st { ν = dois  <$> ν st }
+   | Play <- μ st = st { ν = run (σ st) <$> ν st }
    | otherwise = st
    where
 
-   terra :: Node -> Node
-   terra a@(Atom s,ns)
+   run :: Simulation -> Node -> Node
+   run Terra a@(Atom s,ns)
       | leq > 2 = a
       | lgt < llt = (Atom $ prev s,ns)
       | otherwise = (Atom $ next s,ns)
@@ -178,8 +177,7 @@ step st
       nvs = sal . (ν st !) <$> ns
    -- avg = div (sum (sal . (ν st !) <$> ns)) (genericLength ns)
 
-   dois :: Node -> Node
-   dois a@(Atom s,ns)
+   run Dois a@(Atom s,ns)
       | length (filter (== minimum nvs) nvs) <= (sal a - minimum nvs) = (Atom $ prev s,ns)
       | sum (filter (> sal a) nvs) > 6 = (Atom $ next s,ns)
       | otherwise = a
