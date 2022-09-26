@@ -165,6 +165,7 @@ step st
    where
 
    run :: Simulation -> Node -> Node
+
    run Terra a@(Atom s,ns)
       | leq > 2 = a
       | lgt < llt = (Atom $ prev s,ns)
