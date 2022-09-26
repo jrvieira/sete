@@ -28,7 +28,7 @@ data Some = S0 | S1 | S2 | S3 | S4 | S5 | S6 | S7
    deriving ( Eq, Ord, Enum, Bounded )
 
 pixel :: Some -> Char
-pixel = (" -:=+o#@" !!) . fromEnum -- ▲△▼▽
+pixel = (" :-+=≠co" !!) . fromEnum
 
 instance Semigroup Some where
    a <> b = toEnum $ min 7 (fromEnum a + fromEnum b)
@@ -68,8 +68,10 @@ data State = State {
    ν :: Verse ,
    λ :: Layer ,
    σ :: Simulation ,
+   ρ :: [Atom] ,  -- random list of atoms
+   ι :: Char ,  -- last input
    φ :: Int ,  -- focused atom
-   τ :: Set Int , -- targeted atoms
+   τ :: Set Int ,  -- targeted atoms
    μ :: Mode }
 
 sup :: (Some -> Some) -> Int -> Verse -> Verse

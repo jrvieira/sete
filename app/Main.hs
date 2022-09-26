@@ -15,28 +15,34 @@ import Data.Tuple
 import Data.Bifunctor
 import Control.Monad
 
-randomise :: Verse -> IO Verse
-randomise v = do
-   gen <- initStdGen
-   pure $ fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList v) (Atom . toEnum <$> randomRs (0,7) gen)
-
--- adjustWithKey :: (Key -> a -> a) -> Key -> IntMap a -> IntMap a
-
 main :: IO ()
 main = do
-   v <- randomise verse
+   r <- randomA
    playGame $ Game {
-      gTPS = 30 ,
-      gInitState = state { ν = v } ,
+      gTPS = 12 ,
+      gInitState = state { ρ = r } ,
       gLogicFunction = catch ,
       gDrawFunction = render ,
       gQuitFunction = const False }
+   where
+
+-- randomise :: Verse -> IO Verse
+-- randomise v = do
+--    gen <- initStdGen
+--    pure $ fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList v) (Atom . toEnum <$> randomRs (0,7) gen)
+
+   randomA :: IO [Atom]
+   randomA = do
+      gen <- initStdGen
+      pure $ Atom . toEnum <$> randomRs (0,7) gen
 
 state :: State
 state = State {
    ν = verse ,
    λ = Test ,
    σ = Terra ,
+   ρ = [] ,
+   ι = ' ' ,
    φ = coordToIndex (div width 2,div height 2) ,
    τ = mempty ,
    μ = Pause }
@@ -46,6 +52,7 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
    each tile ,
    ui ]
    where
+
    fi = φ st
    (f,fis) = ν st ! fi
    color' c i
@@ -62,6 +69,7 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
       | n ∈ fis                  = c % cell x # color' Cyan Vivid # bold
       | otherwise                = c % cell x # color' White Dull
       where
+
       selected :: Bool = φ st == n
       adjacent :: Bool = n ∈ fis
       targeted :: Bool = n ∈ τ st
@@ -77,14 +85,18 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
       (1,1) % focus ,
       (1,fx + 2) % layer ,
       (1,fx + lx + 3) % stat ,
+      (1,fx + lx + sx + 4) % invi ,
       (2,1) % mode
       ]
       where
+
       focus = word (show $ indexToCoord $ φ st) # color' Cyan Dull
       (fx,_) = planeSize focus
       layer = word (show (λ st)) # color' White Dull
       (lx,_) = planeSize layer
       stat = word (show $ sum $ sal <$> elems (ν st)) # color' Yellow Dull
+      (sx,_) = planeSize stat
+      invi = word (show $ ι st) # color' Magenta Dull
       mode
          | Play  <- μ st = word (show $ σ st) # color' White Dull
          | Menu  <- μ st = word (show $ σ st) # color  Cyan  Dull
@@ -93,52 +105,58 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
 
 catch :: GEnv -> State -> Event -> State
 catch _ st Tick = step st
-catch _ st (KeyPress k)
-   -- simulations menu
-   | 'h' <- k , Menu   <- μ st = st { σ = forw (σ st) }
-   | 'j' <- k , Menu   <- μ st = st { σ = back (σ st) }
-   | 'k' <- k , Menu   <- μ st = st { σ = forw (σ st) }
-   | 'l' <- k , Menu   <- μ st = st { σ = back (σ st) }
-   | 'p' <- k , Menu   <- μ st = st { μ = Play }  -- exit menu and play
-   | 's' <- k , Menu   <- μ st = st { μ = Pause }  -- exit menu
-   |  _  <- k , Menu   <- μ st = st  -- block other input while in menu
-   -- open menu
-   | 's' <- k                  = st { μ = Menu }
-   -- pause
-   | 'p' <- k , Pause  <- μ st = st { μ = Play }
-   | 'p' <- k , Play   <- μ st = st { μ = Pause }
-   -- movement
-   | 'h' <- k                  = st { φ = move 1 H fi }
-   | 'j' <- k                  = st { φ = move 1 N fi }
-   | 'k' <- k                  = st { φ = move 1 I fi }
-   | 'l' <- k                  = st { φ = move 1 L fi }
-   | 'u' <- k                  = st { φ = move 1 U fi }
-   | 'i' <- k                  = st { φ = move 1 I fi }
-   | 'n' <- k                  = st { φ = move 1 N fi }
-   | 'm' <- k                  = st { φ = move 1 M fi }
-   -- target
-   | 't' <- k , Atom {} <- f   = st { τ = insert fi mempty }
-   | 'T' <- k , Atom {} <- f   = st { τ = if fi ∈ t then delete fi t else insert fi t }
-   -- manipulation
-   | '0' <- k                  = st { ν = sup (const S0) fi (ν st) }
-   | '1' <- k                  = st { ν = sup (const S1) fi (ν st) }
-   | '2' <- k                  = st { ν = sup (const S2) fi (ν st) }
-   | '3' <- k                  = st { ν = sup (const S3) fi (ν st) }
-   | '4' <- k                  = st { ν = sup (const S4) fi (ν st) }
-   | '5' <- k                  = st { ν = sup (const S5) fi (ν st) }
-   | '6' <- k                  = st { ν = sup (const S6) fi (ν st) }
-   | '7' <- k                  = st { ν = sup (const S7) fi (ν st) }
-   | '+' <- k                  = st { ν = sup next fi (ν st) }
-   | '-' <- k                  = st { ν = sup prev fi (ν st) }
-   -- layer
-   | 'v' <- k                  = st { λ = forw (λ st) }
-   | 'V' <- k                  = st { λ = back (λ st) }
-   -- nothing
-   | otherwise = st
+catch _ st (KeyPress k) = st' { ι = k }
    where
+
    fi = φ st
    (f,fis) = ν st ! fi
    t = τ st :: Set Int
+
+   st'
+      -- simulations menu
+      | 'h' <- k , Menu   <- μ st = st { σ = forw (σ st) }
+      | 'j' <- k , Menu   <- μ st = st { σ = back (σ st) }
+      | 'k' <- k , Menu   <- μ st = st { σ = forw (σ st) }
+      | 'l' <- k , Menu   <- μ st = st { σ = back (σ st) }
+      | 'p' <- k , Menu   <- μ st = st { μ = Play }  -- exit menu and play
+      | '\n'<- k , Menu   <- μ st = st { μ = Pause }  -- exit menu
+      | 's' <- k , Menu   <- μ st = st { μ = Pause }  -- exit menu
+      |  _  <- k , Menu   <- μ st = st  -- block other input while in menu
+      -- open menu
+      | 's' <- k                  = st { μ = Menu }
+      -- randomise
+      | 'r' <- k                  = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList $ ν st) r , ρ = r' }
+      -- pause
+      | 'p' <- k , Pause  <- μ st = st { μ = Play }
+      | 'p' <- k , Play   <- μ st = st { μ = Pause }
+      -- movement
+      | 'h' <- k                  = st { φ = move 1 H fi }
+      | 'j' <- k                  = st { φ = move 1 N fi }
+      | 'k' <- k                  = st { φ = move 1 I fi }
+      | 'l' <- k                  = st { φ = move 1 L fi }
+      | 'u' <- k                  = st { φ = move 1 U fi }
+      | 'i' <- k                  = st { φ = move 1 I fi }
+      | 'n' <- k                  = st { φ = move 1 N fi }
+      | 'm' <- k                  = st { φ = move 1 M fi }
+      -- target
+      | 't' <- k , Atom {} <- f   = st { τ = insert fi mempty }
+      | 'T' <- k , Atom {} <- f   = st { τ = if fi ∈ t then delete fi t else insert fi t }
+      -- manipulation
+      | '0' <- k                  = st { ν = sup (const S0) fi (ν st) }
+      | '1' <- k                  = st { ν = sup (const S1) fi (ν st) }
+      | '2' <- k                  = st { ν = sup (const S2) fi (ν st) }
+      | '3' <- k                  = st { ν = sup (const S3) fi (ν st) }
+      | '4' <- k                  = st { ν = sup (const S4) fi (ν st) }
+      | '5' <- k                  = st { ν = sup (const S5) fi (ν st) }
+      | '6' <- k                  = st { ν = sup (const S6) fi (ν st) }
+      | '7' <- k                  = st { ν = sup (const S7) fi (ν st) }
+      | '+' <- k                  = st { ν = sup next fi (ν st) }
+      | '-' <- k                  = st { ν = sup prev fi (ν st) }
+      -- layer
+      | 'v' <- k                  = st { λ = forw (λ st) }
+      | 'V' <- k                  = st { λ = back (λ st) }
+      -- nothing
+      | otherwise                 = st
 
 step :: State -> State
 step st
@@ -153,6 +171,7 @@ step st
       | lgt < llt = (Atom $ prev s,ns)
       | otherwise = (Atom $ next s,ns)
       where
+
       leq = length $ filter (== sal a) nvs
       lgt = length $ filter (>  sal a) nvs
       llt = length $ filter (<  sal a) nvs
@@ -165,5 +184,6 @@ step st
       | sum (filter (> sal a) nvs) > 6 = (Atom $ next s,ns)
       | otherwise = a
       where
+
       nvs = sal . (ν st !) <$> ns
 
