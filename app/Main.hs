@@ -26,7 +26,7 @@ main :: IO ()
 main = do
    v <- randomise verse
    playGame $ Game {
-      gTPS = 11 ,
+      gTPS = 30 ,
       gInitState = state { ν = v } ,
       gLogicFunction = catch ,
       gDrawFunction = render ,
@@ -68,10 +68,14 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
       x = pixel (α a)
 
    ui :: [Draw]
-   ui = [
-      (1,1) % word (show $ indexToCoord $ φ st) # color Cyan Dull ,
-      (1,7) % word (unwords $ [show (λ st),show (sum $ sal <$> elems (ν st))]) # color White Vivid ,
-      (2,1) % word (show $ μ st) # color Black Vivid ]
+   ui = [ (1,1) % focus , (1,fx + 2) % layer , (1,fx + lx + 3) % stat , (2,1) % mode ]
+      where
+      focus = word (show $ indexToCoord $ φ st) # color Cyan Dull
+      (fx,_) = planeSize focus
+      layer = word (show (λ st)) # color White Vivid
+      (lx,_) = planeSize layer
+      stat = word (show $ sum $ sal <$> elems (ν st)) # color Yellow Dull
+      mode = word (show $ μ st) # color Black Vivid
 
 catch :: GEnv -> State -> Event -> State
 catch _ st Tick = step st
