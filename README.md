@@ -1,0 +1,3 @@
+# Sete
+
+exagonal cellular automata
