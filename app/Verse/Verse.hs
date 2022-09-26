@@ -28,7 +28,7 @@ data Some = S0 | S1 | S2 | S3 | S4 | S5 | S6 | S7
    deriving ( Eq, Ord, Enum, Bounded )
 
 pixel :: Some -> Char
-pixel = (" ⋅∶⋮░▒▓█" !!) . fromEnum
+pixel = (" -:=+o#@" !!) . fromEnum -- ▲△▼▽
 
 instance Semigroup Some where
    a <> b = toEnum $ min 7 (fromEnum a + fromEnum b)
@@ -45,8 +45,10 @@ type Verse = IntMap Node
 data Layer = Superficial | Schematic | Atomic | Test
    deriving ( Show, Eq, Enum, Bounded )
 
-data Mode = Normal | Pause | Menu
-   deriving ( Show )
+data Mode = Play | Pause | Menu
+
+data Simulation = Dois | Terra
+   deriving ( Show, Eq, Enum, Bounded )
 
 verse :: Verse
 verse = fromList $ take (width * height) $ (id &&& atom) <$> [0..]
@@ -65,6 +67,7 @@ verse = fromList $ take (width * height) $ (id &&& atom) <$> [0..]
 data State = State {
    ν :: Verse ,
    λ :: Layer ,
+   σ :: Simulation ,
    φ :: Int ,  -- focused atom
    τ :: Set Int , -- targeted atoms
    μ :: Mode }
