@@ -1,3 +1,3 @@
 # Sete
 
-exagonal cellular automata
+hexagonal cellular automata
