@@ -9,7 +9,7 @@ test = True :: Bool
 
 -- verse
 
-(width,height) = (31,17) :: (Int,Int)
+(width,height) = (16,2 * 9) :: (Int,Int)
 
 (marginX,marginY) = (1,2) :: (Int,Int)
 
