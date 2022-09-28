@@ -82,19 +82,19 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
    ui :: [Draw]
    ui = [
       (1,1) % focus ,
-      (1,fx + 2) % layer ,
-      (1,fx + lx + 3) % stat ,
-      (1,fx + lx + sx + 4) % invi ,
+      (1,fw + 2) % layer ,
+      (1,fw + lw + 3) % stat ,
+      (1,fw + lw + sw + 4) % invi ,
       (2,1) % mode
       ]
       where
 
       focus = word (show $ indexToCoord $ φ st) # color' Cyan Dull
-      (fx,_) = planeSize focus
+      (fw,_) = planeSize focus
       layer = word (show (λ st)) # color' White Dull
-      (lx,_) = planeSize layer
+      (lw,_) = planeSize layer
       stat = word (show $ sum $ sal <$> elems (ν st)) # color' Yellow Dull
-      (sx,_) = planeSize stat
+      (sw,_) = planeSize stat
       invi = word (show $ ι st) # color' Magenta Dull
       mode
          | Play  <- μ st = word (show $ σ st) # color' White Dull
