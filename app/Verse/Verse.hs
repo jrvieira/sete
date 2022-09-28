@@ -47,7 +47,7 @@ data Layer = Superficial | Schematic | Atomic | Test
 
 data Mode = Play | Pause | Menu
 
-data Simulation = Dois | Terra
+data Simulation = Dois | Terra | Bees | Fish | Fish2 | Glider
    deriving ( Show, Eq, Enum, Bounded )
 
 verse :: Verse

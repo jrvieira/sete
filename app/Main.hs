@@ -64,13 +64,12 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
 
    tile :: (Int,Node) -> Draw
    tile (n,(a,ns))
-      | n == φ st , Menu <- μ st = c % cell x # color' White Dull
-      | n == φ st                = c % cell (head $ show $ fromEnum $ α a) # color' Cyan Dull # bold
-      | n ∈ fis                  = c % cell x # color' Cyan Vivid # bold
-      | otherwise                = c % cell x # color' White Dull
+      | selected                = c % cell (head $ show $ fromEnum $ α a) # color' Cyan Dull # bold
+      | adjacent                = c % cell x # color' Cyan Vivid # bold
+      | otherwise               = c % cell x # color' White Dull
       where
 
-      selected :: Bool = φ st == n
+      selected :: Bool = n == φ st
       adjacent :: Bool = n ∈ fis
       targeted :: Bool = n ∈ τ st
       -- translate square to exagonal
@@ -113,11 +112,13 @@ catch _ st (KeyPress k) = st' { ι = k }
    t = τ st :: Set Int
 
    st'
+      -- step
+      | '.' <- k                  = (step st { μ = Play }) { μ = Pause }
       -- simulations menu
-      | 'h' <- k , Menu   <- μ st = st { σ = forw (σ st) }
+      | 'h' <- k , Menu   <- μ st = st { σ = back (σ st) }
       | 'j' <- k , Menu   <- μ st = st { σ = back (σ st) }
       | 'k' <- k , Menu   <- μ st = st { σ = forw (σ st) }
-      | 'l' <- k , Menu   <- μ st = st { σ = back (σ st) }
+      | 'l' <- k , Menu   <- μ st = st { σ = forw (σ st) }
       | 'p' <- k , Menu   <- μ st = st { μ = Play }  -- exit menu and play
       | '\n'<- k , Menu   <- μ st = st { μ = Pause }  -- exit menu
       | 's' <- k , Menu   <- μ st = st { μ = Pause }  -- exit menu
@@ -126,6 +127,8 @@ catch _ st (KeyPress k) = st' { ι = k }
       | 's' <- k                  = st { μ = Menu }
       -- randomise
       | 'r' <- k                  = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList $ ν st) r , ρ = r' }
+      -- zero out
+      | 'z' <- k                  = st { ν = (\(Atom _,ns) -> (Atom S0,ns)) <$> ν st }
       -- pause
       | 'p' <- k , Pause  <- μ st = st { μ = Play }
       | 'p' <- k , Play   <- μ st = st { μ = Pause }
@@ -171,7 +174,6 @@ step st
       | lgt < llt = (Atom $ prev s,ns)
       | otherwise = (Atom $ next s,ns)
       where
-
       leq = length $ filter (== sal a) nvs
       lgt = length $ filter (>  sal a) nvs
       llt = length $ filter (<  sal a) nvs
@@ -183,6 +185,45 @@ step st
       | sum (filter (> sal a) nvs) > 6 = (Atom $ next s,ns)
       | otherwise = a
       where
+      nvs = sal . (ν st !) <$> ns
 
+   run Bees a@(Atom s,ns)
+      | length (filter (> sal a) nvs) ∈ [2] = (Atom $ next s,ns)
+      | length (filter (> sal a) nvs) ∈ [2] = a
+      | otherwise = (Atom $ prev s,ns)
+      where
+      nvs = sal . (ν st !) <$> ns
+
+   run Fish a@(Atom s,ns)
+      | length (filter (== 7) nvs) ∈ survive , sal a > (n-2) = (Atom S7,ns)
+      | length (filter (== 7) nvs) ∈ born , sal a < 1 = (Atom S7,ns)
+      | sal a <= (n-2) = (Atom $ prev s,ns)
+      | otherwise = (Atom $ toEnum (n-2),ns)
+      where
+      survive = [2]
+      born = [2]
+      n = 3  -- number of states
+      nvs = sal . (ν st !) <$> ns
+
+   run Fish2 a@(Atom s,ns)
+      | length (filter (== 7) nvs) ∈ survive , sal a > (n-2) = (Atom S7,ns)
+      | length (filter (== 7) nvs) ∈ born , sal a < 1 = (Atom S7,ns)
+      | sal a <= (n-2) = (Atom $ prev s,ns)
+      | otherwise = (Atom $ toEnum (n-2),ns)
+      where
+      survive = [2,4]
+      born = [2,4]
+      n = 3  -- number of states
+      nvs = sal . (ν st !) <$> ns
+
+   run Glider a@(Atom s,ns)
+      | length (filter (== 7) nvs) ∈ survive , sal a > (n-2) = (Atom S7,ns)
+      | length (filter (== 7) nvs) ∈ born , sal a < 1 = (Atom S7,ns)
+      | sal a <= (n-2) = (Atom $ prev s,ns)
+      | otherwise = (Atom $ toEnum (n-2),ns)
+      where
+      survive = [1,3,4]
+      born = [2,3,4,5]
+      n = 5  -- number of states
       nvs = sal . (ν st !) <$> ns
 
