@@ -64,8 +64,11 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
 
    tile :: (Int,Node) -> Draw
    tile (n,(a,ns))
-      | selected                = c % cell (head $ show $ fromEnum $ α a) # color' Cyan Dull # bold
-      | adjacent                = c % cell x # color' Cyan Vivid # bold
+      | selected , targeted     = c % cell s # color' Red   Dull  # bold
+      | adjacent , targeted     = c % cell x # color' Red   Dull
+      | otherwise , targeted    = c % cell x # color' Red   Dull
+      | selected                = c % cell s # color' Cyan  Dull  # bold
+      | adjacent                = c % cell x # color' Cyan  Vivid
       | otherwise               = c % cell x # color' White Dull
       where
 
@@ -78,6 +81,8 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
       c' = bimap ((+ marginY) . succ) ((+ (2 * marginX)) . succ . (* 2)) . swap $ indexToCoord n
       -- cell
       x = pixel (α a)
+      -- Some value
+      s = head $ show $ fromEnum $ α a
 
    ui :: [Draw]
    ui = [
@@ -109,7 +114,6 @@ catch _ st (KeyPress k) = st' { ι = k }
 
    fi = φ st
    (f,fis) = ν st ! fi
-   t = τ st :: Set Int
 
    st'
       -- step
@@ -143,7 +147,7 @@ catch _ st (KeyPress k) = st' { ι = k }
       | 'm' <- k                  = st { φ = move 1 M fi }
       -- target
       | 't' <- k , Atom {} <- f   = st { τ = insert fi mempty }
-      | 'T' <- k , Atom {} <- f   = st { τ = if fi ∈ t then delete fi t else insert fi t }
+      | 'T' <- k , Atom {} <- f   = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }
       -- manipulation
       | '0' <- k                  = st { ν = sup (const S0) fi (ν st) }
       | '1' <- k                  = st { ν = sup (const S1) fi (ν st) }
