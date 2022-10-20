@@ -1,3 +1,6 @@
 [submodule "app/Zero"]
 	path = app/Zero
 	url = git@github.com:jrvieira/Zero
+[submodule "vendor/ansi-terminal-game"]
+	path = vendor/ansi-terminal-game
+	url = git@github.com:jrvieira.com/ansi-terminal-game
