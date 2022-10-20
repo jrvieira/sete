@@ -1,8 +1,5 @@
 module Verse.Conf where
 
-import Data.Bifunctor ( bimap )
-import Control.Monad ( join )
-
 -- testing
 
 test = True :: Bool

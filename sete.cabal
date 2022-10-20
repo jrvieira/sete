@@ -1,45 +1,46 @@
-cabal-version:      2.4
-name:               sete
-version:            0.1.0.0
+cabal-version: 2.4
+name: sete
+version: 0.1.0.0
 
-author:             jrvieira
-maintainer:         github@jrvieira.com
+author: jrvieira
+maintainer: github@jrvieira.com
 
 extra-source-files: CHANGELOG.md
 
 executable seis
-    main-is:        Main.hs
-    ghc-options:    -O2 -threaded -rtsopts
+   main-is: Main.hs
+   ghc-options: -O2 -threaded -rtsopts
 
-    -- Modules included in this executable, other than Main.
-    other-modules: Zero.Zero
-       , Zero.Color
-       , Verse.Conf
-       , Verse.Util
-       , Verse.Verse
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.14.3.0
-       , random
-       , containers
-    -- , ansi-terminal  -- low level
-    -- , vty
-       , ansi-terminal-game
-    -- , brick  -- brick is UI oriented, built on vty
-    -- , JuicyPixels
-    -- , gloss
-    hs-source-dirs:   app
-    default-language: Haskell2010
-    default-extensions: BangPatterns
-       , ImportQualifiedPost
-       , TupleSections
-       , GADTs
-       , StandaloneDeriving
-       , ScopedTypeVariables
-       , BinaryLiterals
---     , GeneralizedNewtypeDeriving
---     , LexicalNegation
---     , OverloadedLists
---     , OverloadedStrings
-       , TypeApplications
-       , PartialTypeSignatures
+   -- Modules included in this executable, other than Main.
+   other-modules: Zero.Zero
+      , Zero.Color
+      , Verse.Conf
+      , Verse.Types
+      , Verse.Verse
+      , Verse.Sim
+   -- LANGUAGE extensions used by modules in this package.
+   -- other-extensions:
+   build-depends: base
+      , random
+      , containers
+   -- , ansi-terminal
+   -- , vty
+      , ansi-terminal-game == 1.8.0.0
+   -- , brick
+   -- , JuicyPixels
+   -- , gloss
+   hs-source-dirs: app
+   default-language: Haskell2010
+   default-extensions: BangPatterns
+      , ImportQualifiedPost
+      , TupleSections
+      , GADTs
+      , StandaloneDeriving
+      , ScopedTypeVariables
+      , BinaryLiterals
+   -- , GeneralizedNewtypeDeriving
+   -- , LexicalNegation
+   -- , OverloadedLists
+   -- , OverloadedStrings
+      , TypeApplications
+      , PartialTypeSignatures
