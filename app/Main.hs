@@ -17,7 +17,7 @@ main :: IO ()
 main = do
    r <- randomA
    playGame $ Game {
-      gTPS = 10 ,
+      gTPS = 15 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = catch ,
       gDrawFunction = render ,
@@ -63,13 +63,13 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
 
    tile :: (Int,Node) -> Draw
    tile (n,(a,ns))
-      | Menu <- μ st        = c % cell x # color Black Vivid
+      | Menu <- μ st        = c % cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
       | selected , targeted = c % cell s # color Red   Dull
       | adjacent , targeted = c % cell x # color Red   Dull
       |            targeted = c % cell x # color Red   Dull
       | selected            = c % cell s # color Cyan  Dull
       | adjacent            = c % cell x # color Cyan  Dull
-      | Pause <- μ st       = c % cell x # paletteColor (xterm24LevelGray $ 2 + 3 * fromEnum a)
+      | Pause <- μ st       = c % cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
       | Atom s <- a         = c % cell x # stone s
       | otherwise           = c % cell x # color White Dull
       where
@@ -97,14 +97,16 @@ render _ st = foldl (&) (blankPlane (2 * width + marginY) (height + (2 * marginX
       where
 
       focus = word (show $ indexToCoord $ φ st) # k (color Cyan Dull)
-      (fw,_) = planeSize focus
       layer = word (show (λ st)) # k (color White Dull)
-      (lw,_) = planeSize layer
       stat = word (show $ sum $ sal <$> elems (ν st)) # k (color Yellow Dull)
-      (sw,_) = planeSize stat
       invi = word (show $ ι st) # k (color Magenta Dull)
+      (fw,_) = planeSize focus
+      (lw,_) = planeSize layer
+      (sw,_) = planeSize stat
+
+      mode :: Plane
       mode
-         | Play  <- μ st = word (show $ σ st) # k (color White Dull)
+         | Play  <- μ st = word (show $ σ st) # k (stone S4)
          | Menu  <- μ st = word (show $ σ st) # color  Cyan  Dull
          | Pause <- μ st = word (unwords [show $ σ st,"p"]) # color  Black Vivid
          | otherwise     = word (unwords [show $ σ st,"?"]) # k (color Black Vivid)

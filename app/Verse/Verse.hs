@@ -27,15 +27,15 @@ import Data.Tuple ( swap )
 -}
 
 pixel :: Some -> Char
-pixel = (" ~:+=≠co" !!) . fromEnum
+pixel = (" ·~+=≠co" !!) . fromEnum
 
 stone :: Some -> Draw
 stone S0 = paletteColor $ xterm6LevelRGB 0 1 0  -- xterm24LevelGray 2
 stone S1 = paletteColor $ xterm6LevelRGB 0 1 1  -- xterm24LevelGray 5
 stone S2 = paletteColor $ xterm6LevelRGB 1 1 2  -- xterm24LevelGray 8
-stone S3 = paletteColor $ xterm6LevelRGB 1 1 3  -- xterm24LevelGray 11
+stone S3 = paletteColor $ xterm6LevelRGB 2 1 3  -- xterm24LevelGray 11
 stone S4 = paletteColor $ xterm6LevelRGB 3 1 4  -- xterm24LevelGray 14
-stone S5 = paletteColor $ xterm6LevelRGB 3 2 5  -- xterm24LevelGray 17
+stone S5 = paletteColor $ xterm6LevelRGB 4 2 5  -- xterm24LevelGray 17
 stone S6 = paletteColor $ xterm6LevelRGB 5 3 5  -- xterm24LevelGray 23
 stone S7 = paletteColor $ xterm6LevelRGB 5 4 5  -- xterm24LevelGray 23
 
