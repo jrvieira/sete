@@ -16,13 +16,25 @@ import Data.Tuple ( swap )
 
 {- Each node connects to it's adjacent 6
 
-   o o o o o o o o   0 1 2 3 4 5 6 7
-    o o o o o o o o   8 9 ...
-   o o o o o o o o
-    o o o o o o o o
-   o o o o o o o o
-    o o o o o o o o
-   o o o o o o o o
+
+       + + + +              z z z x x x y y y
+      z z z x +            - - - - - - - - -
+     z z z x x +          x x x y y y z z z
+    z z z x x x +   ->   x x x y y y z z z
+     x x y y y +        x x x y y y z z z
+      x y y y +        - - - - - - - - -
+       y y y +        y y y z z z x x x
+
+
+       + + + +            + + + +               6 7 8 0 1 2 3 4 5      0 0 0 0 0 0 0 0 0
+      6 7 8 0 +          2 2 2 2 +             - - - - - - - - -      - - - - - - - - -
+     6 7 8 0 1 +        1 1 1 1 1 +           0 1 2 3 4 5 6 7 8      2 2 2 2 2 2 2 2 2
+    6 7 8 0 1 2 +      0 0 0 0 0 0 +         0 1 2 3 4 5 6 7 8      1 1 1 1 1 1 1 1 1
+     1 2 3 4 5 +        2 2 2 2 2 +         0 1 2 3 4 5 6 7 8      0 0 0 0 0 0 0 0 0
+      2 3 4 5 +          1 1 1 1 +         - - - - - - - - -      - - - - - - - - -
+       3 4 5 +            0 0 0 +         3 4 5 6 7 8 0 1 2      2 2 2 2 2 2 2 2 2
+
+         x                  y                     x                      y
 
 -}
 
@@ -45,11 +57,9 @@ verse = fromList $ take (width * height) $ (id &&& atom) <$> [0..]
 atom :: Int -> Node
 atom i = (Atom S1,adjacents)
    where
-   adjacents
-      | even y = ($ i) . move 1 <$> total
-      |  odd y = ($ i) . move 1 <$> total
-   (q,r) = quotRem i width
-   (x,y) = indexToCoord i
+   adjacents = ($ i) . move 1 <$> total
+-- (x,y) = indexToCoord i
+-- (q,r) = quotRem i width
 
 sup :: (Some -> Some) -> Int -> Verse -> Verse
 sup f i v = adjust (const (Atom (f s),ns)) i v
@@ -70,13 +80,17 @@ distance a b = undefined
 
 move :: Int -> Dir -> Int -> Int
 move n d i
-   | U <- d = coordToIndex (mod (pred x') width , mod (y - n) height)
-   | I <- d = coordToIndex (x' , mod (y - n) height)
-   | H <- d = coordToIndex (mod (x - n) width , y)
-   | L <- d = coordToIndex (mod (x + n) width , y)
-   | N <- d = coordToIndex (mod (pred x') width , mod (y + n) height)
-   | M <- d = coordToIndex (x' , mod (y + n) height)
+   | U <- d = coordToIndex $ f (mod (pred x) width , y + n)
+   | I <- d = coordToIndex $ f (x , y + n)
+   | H <- d = coordToIndex $ f (mod (x - n) width , y)
+   | L <- d = coordToIndex $ f (mod (x + n) width , y)
+   | N <- d = coordToIndex $ f (x , y - n)
+   | M <- d = coordToIndex $ f (mod (succ x) width , y - n)
    where
    (x,y) = indexToCoord i
-   x' = if odd y then mod (succ x) width else x
+   f (x',y')
+      | y' >= height || y' < 0 = (mod (x' + t * 2 * pred radius) width , mod y' height)
+      | otherwise = (x' , y')
+      where
+      t = div y' height  -- outbound multiplier
 

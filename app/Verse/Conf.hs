@@ -6,7 +6,9 @@ test = True :: Bool
 
 -- verse
 
-(width,height) = (29,2 * 9) :: (Int,Int)
+radius = 7
 
-(marginX,marginY) = (1,2) :: (Int,Int)
+(width,height) = (3 * pred radius , pred radius) :: (Int,Int)
+
+(marginX,marginY) = (1,3) :: (Int,Int)
 

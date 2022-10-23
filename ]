@@ -46,7 +46,8 @@ state = State {
    μ = Pause }
 
 render :: GEnv -> State -> Plane
-render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (pred (2 * radius) + 2 * marginY)) $ concat [
+render _ st = foldl (&) (blankPlane (succ $ 2 * 2 * width + marginY) (succ $ 2 * height + (2 * marginX))) $ concat [
+--                                   ^^^^^^^^^^^ slack                ^^^^^^^^^^^ slack
    each tile ,
    ui ]
    where
@@ -63,33 +64,30 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
 
    tile :: (Int,Node) -> Draw
    tile (n,(a,ns))
-      | Menu <- μ st        = c %.< cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-      | selected , targeted = c %.< cell s # color Red   Dull
-      | adjacent , targeted = c %.< cell x # color Red   Dull
-      |            targeted = c %.< cell x # color Red   Dull
-      | selected            = c %.< cell s # color Cyan  Dull
-      | adjacent            = c %.< cell x # color Cyan  Dull
-      | Pause <- μ st       = c %.< cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-      | Atom s <- a         = c %.< cell x # stone s
-      | otherwise           = c %.< cell x # color White Dull
+      | Menu <- μ st        = c % cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
+      | selected , targeted = c % cell s # color Red   Dull
+      | adjacent , targeted = c % cell x # color Red   Dull
+      |            targeted = c % cell x # color Red   Dull
+      | selected            = c % cell s # color Cyan  Dull
+      | adjacent            = c % cell x # color Cyan  Dull
+      | Pause <- μ st       = c % cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
+      | Atom s <- a         = c % cell x # stone s
+      | otherwise           = c % cell x # color White Dull
       where
 
       selected :: Bool = n == φ st
       adjacent :: Bool = n ∈ fis
       targeted :: Bool = n ∈ τ st
       -- translate square to exagonal
-      h = form . hexa $ (x,y)
+      h = {-form $-} hexa (x,y)
          where
          (x,y) = indexToCoord n
          hexa (x',y')
-            | x + y < r = (x' + r , y' + r)
-            | x >= 2 * r = (x' - 2 * r , y' + r)
-            | otherwise = (x' , y')
-            where
-            r = pred radius
-         form (x',y') = (2 * x' + y' , y')
-      -- translate to library coordinate system (1-based (y,x)) , apply margins
-      c = let (x,y) = h in (marginY + succ y, marginX + succ x)
+            | x + y < height = (x', y' + height)
+            | otherwise = (x',y')
+         form (x',y') = (2 * x' + y , y' - radius)
+      -- translate to library coordinate system (1-based (y,x)) , reflect y , apply margins
+      c = let (x,y) = h in (succ $ negate y + height + marginY , succ x + 2 * marginX)
       -- cell
       x = pixel (α a)
       -- Some value
