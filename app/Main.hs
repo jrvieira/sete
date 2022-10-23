@@ -87,9 +87,9 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
             | otherwise = (x' , y')
             where
             r = pred radius
-         form (x',y') = (2 * x' + y' , y')
+         form (x',y') = (2 * (x' + marginX) + y' - pred radius , y' + marginY)
       -- translate to library coordinate system (1-based (y,x)) , apply margins
-      c = let (x,y) = h in (marginY + succ y, marginX + succ x)
+      c = let (x,y) = h in (succ y, succ x)
       -- cell
       x = pixel (α a)
       -- Some value
