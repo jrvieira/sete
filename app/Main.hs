@@ -12,6 +12,7 @@ import Data.IntMap ( toList, elems )
 import Data.Set ( insert, delete )
 import Data.Tuple ( swap )
 import Data.Bifunctor ( bimap )
+import Control.Monad ( join )
 
 main :: IO ()
 main = do
@@ -41,59 +42,51 @@ state = State {
    σ = Terra ,
    ρ = [] ,
    ι = ' ' ,
-   φ = coordToIndex (div width 2,div height 2) ,
+   φ = coordToIndex (0,0) ,
    τ = mempty ,
    μ = Pause }
 
 render :: GEnv -> State -> Plane
 render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (pred (2 * radius) + 2 * marginY)) $ concat [
-   each tile ,
+   cells ,
    ui ]
    where
 
    fi = φ st
    (f,fis) = ν st ! fi
+
    k :: Draw -> Draw
    k c
       | Menu <- μ st = color Black Vivid
       | otherwise    = c
 
-   each :: ((Int,Node) -> Draw) -> [Draw]
-   each r = r <$> toList (ν st)
-
-   tile :: (Int,Node) -> Draw
-   tile (n,(a,ns))
-      | Menu <- μ st        = c %.< cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-      | selected , targeted = c %.< cell s # color Red   Dull
-      | adjacent , targeted = c %.< cell x # color Red   Dull
-      |            targeted = c %.< cell x # color Red   Dull
-      | selected            = c %.< cell s # color Cyan  Dull
-      | adjacent            = c %.< cell x # color Cyan  Dull
-      | Pause <- μ st       = c %.< cell x # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-      | Atom s <- a         = c %.< cell x # stone s
-      | otherwise           = c %.< cell x # color White Dull
+   -- get cell from any coord relative to origin
+   cells = map go hexagon
       where
-
-      selected :: Bool = n == φ st
-      adjacent :: Bool = n ∈ fis
-      targeted :: Bool = n ∈ τ st
-      -- translate square to exagonal
-      h = form . hexa $ (x,y)
+      hexagon = [ (x,y) | x <- [-r..r] , y <- [-r..r] , abs (x + y) < radius ]
+      r = pred radius
+      go (x,y)
+         | Menu <- μ st        = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
+         | selected , targeted = c %.< cell s # color Red   Dull
+         | adjacent , targeted = c %.< cell p # color Red   Dull
+         |            targeted = c %.< cell p # color Red   Dull
+         | selected            = c %.< cell s # color Cyan  Dull
+         | adjacent            = c %.< cell p # color Cyan  Dull
+         | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
+         | Atom s <- a         = c %.< cell p # stone s
+         | otherwise           = c %.< cell p # color White Dull
          where
-         (x,y) = indexToCoord n
-         hexa (x',y')
-            | x + y < r = (x' + r , y' + r)
-            | x >= 2 * r = (x' - 2 * r , y' + r)
-            | otherwise = (x' , y')
-            where
-            r = pred radius
-         form (x',y') = (2 * (x' + marginX) + y' - pred radius , y' + marginY)
-      -- translate to library coordinate system (1-based (y,x)) , apply margins
-      c = let (x,y) = h in (succ y, succ x)
-      -- cell
-      x = pixel (α a)
-      -- Some value
-      s = head $ show $ fromEnum $ α a
+         -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x)), apply margins
+         c = swap $ join bimap succ (2 * (x' + marginX) + y' - pred radius , y' + marginY)
+         (x',y') = (x + r , y + r)
+         -- Some value
+         s = head $ show $ fromEnum $ α a
+         p = pixel (α a)
+         (a,ns) = ν st ! n
+         n = coordToIndex (mod (x - (div y height) * r) width , mod y height)
+         selected :: Bool = n == φ st
+         adjacent :: Bool = n ∈ fis
+         targeted :: Bool = n ∈ τ st
 
    ui :: [Draw]
    ui = [
