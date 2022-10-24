@@ -55,6 +55,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
    fi = φ st
    (f,fis) = ν st ! fi
 
+   -- inactive color
    k :: Draw -> Draw
    k c
       | Menu <- μ st = color Black Vivid
