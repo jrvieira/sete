@@ -88,12 +88,12 @@ distance a b = undefined
 
 move :: Int -> Dir -> Int -> Int
 move n d i
-   | U <- d = coordToIndex $ f (mod (pred x) width , y + n)
-   | I <- d = coordToIndex $ f (x , y + n)
-   | H <- d = coordToIndex $ f (mod (x - n) width , y)
    | L <- d = coordToIndex $ f (mod (x + n) width , y)
-   | N <- d = coordToIndex $ f (x , y - n)
-   | M <- d = coordToIndex $ f (mod (succ x) width , y - n)
+   | I <- d = coordToIndex $ f (x , y + n)
+   | U <- d = move n I . move n H $ i
+   | H <- d = move (negate n) L i
+   | N <- d = move (negate n) I i
+   | M <- d = move (negate n) U i
    where
    (x,y) = indexToCoord i
    f (x',y')
