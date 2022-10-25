@@ -75,7 +75,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
          | adjacent            = c %.< cell p # color Cyan  Dull
          | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
          | Atom s <- a         = c %.< cell p # stone s
-         | otherwise           = c %.< cell p # color White Dull
+         | otherwise           = c %.< cell '?' # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
          c = join bimap succ (y + r + marginY , 2 * (x + r + marginX) + y)
