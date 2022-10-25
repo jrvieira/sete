@@ -18,7 +18,7 @@ instance Monoid Some where
 data Dir = U | I | H | L | N | M
    deriving ( Enum, Bounded )
 
-newtype Atom = Atom { α ::Some }
+newtype Atom = Atom { α :: Some }
 
 instance Enum Atom where
    toEnum = Atom . toEnum

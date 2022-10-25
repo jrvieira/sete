@@ -17,7 +17,7 @@ main :: IO ()
 main = do
    r <- randomA
    playGame $ Game {
-      gTPS = 15 ,
+      gTPS = 16 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = catch ,
       gDrawFunction = render ,

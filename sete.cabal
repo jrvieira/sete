@@ -29,6 +29,7 @@ executable seis
    -- , brick
    -- , JuicyPixels
    -- , gloss
+      , parallel
    hs-source-dirs: app
    default-language: Haskell2010
    default-extensions: BangPatterns

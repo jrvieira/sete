@@ -6,7 +6,7 @@ test = True :: Bool
 
 -- verse
 
-radius = 12
+radius = 11
 
 (width,height) = (3 * pred radius , pred radius) :: (Int,Int)
 
