@@ -10,7 +10,6 @@ import Terminal.Game
 import System.Random ( randomRs, initStdGen )
 import Data.IntMap ( toList, elems )
 import Data.Set ( insert, delete )
-import Data.Tuple ( swap )
 import Data.Bifunctor ( bimap )
 import Control.Monad ( join )
 
@@ -78,8 +77,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
          | otherwise           = c %.< cell p # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
-         c = swap $ join bimap succ (2 * (x' + marginX) + y' - pred radius , y' + marginY)
-         (x',y') = (x + r , y + r)
+         c = join bimap succ (y + r + marginY , 2 * (x + r + marginX) + y)
          -- Some value
          s = head $ show $ fromEnum $ α a
          p = pixel (α a)
