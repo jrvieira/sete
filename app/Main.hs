@@ -77,7 +77,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
          | Atom s <- a         = c %.< cell p # stone s
          | otherwise           = c %.< cell p # color White Dull
          where
-         -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x)), apply margins
+         -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
          c = swap $ join bimap succ (2 * (x' + marginX) + y' - pred radius , y' + marginY)
          (x',y') = (x + r , y + r)
          -- Some value
@@ -157,17 +157,17 @@ catch _ st (KeyPress k) = st' { ι = k }
       | 'T' <- k , Atom {} <- f   = st { τ = insert fi mempty }
       | 't' <- k , Atom {} <- f   = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }
       -- manipulation
-      | '0' <- k                  = st { ν = sup (const S0) fi (ν st) }
-      | '1' <- k                  = st { ν = sup (const S1) fi (ν st) }
-      | '2' <- k                  = st { ν = sup (const S2) fi (ν st) }
-      | '3' <- k                  = st { ν = sup (const S3) fi (ν st) }
-      | '4' <- k                  = st { ν = sup (const S4) fi (ν st) }
-      | '5' <- k                  = st { ν = sup (const S5) fi (ν st) }
-      | '6' <- k                  = st { ν = sup (const S6) fi (ν st) }
-      | '7' <- k                  = st { ν = sup (const S7) fi (ν st) }
-      | '=' <- k                  = st { ν = sup next fi (ν st) }
-      | '+' <- k                  = st { ν = sup next fi (ν st) }
-      | '-' <- k                  = st { ν = sup prev fi (ν st) }
+      | '0' <- k                  = st { ν = vup (const S0) fi (ν st) }
+      | '1' <- k                  = st { ν = vup (const S1) fi (ν st) }
+      | '2' <- k                  = st { ν = vup (const S2) fi (ν st) }
+      | '3' <- k                  = st { ν = vup (const S3) fi (ν st) }
+      | '4' <- k                  = st { ν = vup (const S4) fi (ν st) }
+      | '5' <- k                  = st { ν = vup (const S5) fi (ν st) }
+      | '6' <- k                  = st { ν = vup (const S6) fi (ν st) }
+      | '7' <- k                  = st { ν = vup (const S7) fi (ν st) }
+      | '=' <- k                  = st { ν = vup next fi (ν st) }
+      | '+' <- k                  = st { ν = vup next fi (ν st) }
+      | '-' <- k                  = st { ν = vup prev fi (ν st) }
       -- layer
       | 'v' <- k                  = st { λ = forw (λ st) }
       | 'V' <- k                  = st { λ = back (λ st) }

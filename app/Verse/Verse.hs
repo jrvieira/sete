@@ -61,13 +61,21 @@ atom i = (Atom S1,adjacents)
 -- (x,y) = indexToCoord i
 -- (q,r) = quotRem i width
 
-sup :: (Some -> Some) -> Int -> Verse -> Verse
-sup f i v = adjust (const (Atom (f s),ns)) i v
-   where
-   (Atom s,ns) = v ! i
-
+-- get node sval
 sal :: Node -> Int
 sal (Atom s,_) = fromEnum s
+
+-- update node sval
+sup :: (Some -> Some) -> Node -> Node
+sup f (Atom s,ns) = (Atom $ f s , ns)
+
+-- update specific atom sval in verse
+val :: Verse -> Int -> Int
+val v i = sal (v ! i)
+
+-- update specific atom sval in verse
+vup :: (Some -> Some) -> Int -> Verse -> Verse
+vup f i v = adjust (sup f) i v
 
 coordToIndex :: (Int,Int) -> Int
 coordToIndex (x,y) = y * width + x
