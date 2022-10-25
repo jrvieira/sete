@@ -43,6 +43,7 @@ state = State {
    ι = ' ' ,
    φ = coordToIndex (0,0) ,
    τ = mempty ,
+   κ = 0 ,
    μ = Pause }
 
 render :: GEnv -> State -> Plane
@@ -82,8 +83,9 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
          s = head $ show $ fromEnum $ α a
          p = pixel (α a)
          (a,ns) = ν st ! n
-         n = coordToIndex (mod (x - (div y height) * r) width , mod y height)
-         selected :: Bool = n == φ st
+         n = move mx L . move my I $ coordToIndex (mod (x - (div y height) * r) width , mod y height)
+         (mx,my) = indexToCoord (κ st)
+         selected :: Bool = n == fi
          adjacent :: Bool = n ∈ fis
          targeted :: Bool = n ∈ τ st
 
@@ -151,6 +153,15 @@ catch _ st (KeyPress k) = st' { ι = k }
       | 'i' <- k                  = st { φ = move 1 I fi }
       | 'n' <- k                  = st { φ = move 1 N fi }
       | 'm' <- k                  = st { φ = move 1 M fi }
+      -- scroll
+      | 'H' <- k                  = st { κ = move 1 H (κ st) }
+      | 'J' <- k                  = st { κ = move 1 N (κ st) }
+      | 'K' <- k                  = st { κ = move 1 I (κ st) }
+      | 'L' <- k                  = st { κ = move 1 L (κ st) }
+      | 'U' <- k                  = st { κ = move 1 U (κ st) }
+      | 'I' <- k                  = st { κ = move 1 I (κ st) }
+      | 'N' <- k                  = st { κ = move 1 N (κ st) }
+      | 'M' <- k                  = st { κ = move 1 M (κ st) }
       -- target
       | 'T' <- k , Atom {} <- f   = st { τ = insert fi mempty }
       | 't' <- k , Atom {} <- f   = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }

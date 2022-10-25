@@ -44,5 +44,6 @@ data State = State {
    ι :: Char ,  -- last input
    φ :: Int ,  -- focused atom
    τ :: Set Int ,  -- targeted atoms
+   κ :: Int ,  -- center
    μ :: Mode }
 
