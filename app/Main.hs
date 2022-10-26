@@ -8,43 +8,19 @@ import Verse.Sim
 
 import Terminal.Game
 import System.Random ( randomRs, initStdGen )
-import Data.IntMap ( toList, elems )
 import Data.Set ( insert, delete )
 import Data.Bifunctor ( bimap )
 import Control.Monad ( join )
 
 main :: IO ()
 main = do
-   r <- randomA
+   r <- randomRs (S0,S7) <$> initStdGen
    playGame $ Game {
       gTPS = 16 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = catch ,
       gDrawFunction = render ,
       gQuitFunction = const False }
-   where
-
--- randomise :: Verse -> IO Verse
--- randomise v = do
---    gen <- initStdGen
---    pure $ fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList v) (Atom . toEnum <$> randomRs (0,7) gen)
-
-   randomA :: IO [Atom]
-   randomA = do
-      gen <- initStdGen
-      pure $ Atom . toEnum <$> randomRs (0,7) gen
-
-state :: State
-state = State {
-   ν = verse ,
-   λ = Test ,
-   σ = Terra ,
-   ρ = [] ,
-   ι = ' ' ,
-   φ = coordToIndex (0,0) ,
-   τ = mempty ,
-   κ = 0 ,
-   μ = Pause }
 
 render :: GEnv -> State -> Plane
 render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (pred (2 * radius) + 2 * marginY)) $ concat [
@@ -55,13 +31,8 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
    fi = φ st
    (f,fis) = ν st ! fi
 
-   -- inactive color
-   k :: Draw -> Draw
-   k c
-      | Menu <- μ st = color Black Vivid
-      | otherwise    = c
-
    -- get cell from any coord relative to origin
+   cells :: [Draw]
    cells = map go hexagon
       where
       hexagon = [ (x,y) | x <- [-r..r] , y <- [-r..r] , abs (x + y) < radius ]
@@ -74,17 +45,19 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
          | selected            = c %.< cell s # color Cyan  Dull
          | adjacent            = c %.< cell p # color Cyan  Dull
          | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-         | Atom s <- a         = c %.< cell p # stone s
-         | otherwise           = c %.< cell '?' # color White Dull
+         | Atom {} <- a        = c %.< cell p # stone a
+      -- | otherwise           = c %.< cell '?' # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
          c = join bimap succ (y + r + marginY , 2 * (x + r + marginX) + y)
          -- Some value
-         s = head $ show $ fromEnum $ α a
-         p = pixel (α a)
+         s = head . show $ sal (a,ns)
+         p = pixel a
          (a,ns) = ν st ! n
-         n = move mx L . move my I $ coordToIndex (mod (x - (div y height) * r) width , mod y height)
-         (mx,my) = indexToCoord (κ st)
+         -- get index of node taking scroll into account
+         n = move mx L . move my I $ coordToIndex (mod (x - div y height * r) width , mod y height)
+            where
+            (mx,my) = indexToCoord (κ st)
          selected :: Bool = n == fi
          adjacent :: Bool = n ∈ fis
          targeted :: Bool = n ∈ τ st
@@ -107,12 +80,18 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
       (lw,_) = planeSize layer
       (sw,_) = planeSize stat
 
+      -- inactive color
+      k :: Draw -> Draw
+      k c
+         | Menu <- μ st = color Black Vivid
+         | otherwise    = c
+
       mode :: Plane
       mode
-         | Play  <- μ st = word (show $ σ st) # k (stone S4)
+         | Play  <- μ st = word (show $ σ st) # k (paletteColor $ xterm6LevelRGB 3 1 4)
          | Menu  <- μ st = word (show $ σ st) # color  Cyan  Dull
          | Pause <- μ st = word (unwords [show $ σ st,"p"]) # color  Black Vivid
-         | otherwise     = word (unwords [show $ σ st,"?"]) # k (color Black Vivid)
+      -- | otherwise     = word (unwords [show $ σ st,"?"]) # k (color Black Vivid)
 
 catch :: GEnv -> State -> Event -> State
 catch _ st Tick = step st
@@ -124,10 +103,10 @@ catch _ st (KeyPress k) = st' { ι = k }
 
    st'
       -- zero out
-      | 'z' <- k                  = st { ν = (\(Atom _,ns) -> (Atom S0,ns)) <$> ν st }
-      | 'f' <- k                  = st { ν = (\(Atom _,ns) -> (Atom S7,ns)) <$> ν st }
+      | 'z' <- k                  = st { ν = sup (const S0) <$> ν st }
+      | 'f' <- k                  = st { ν = sup (const S7) <$> ν st }
       -- randomise
-      | 'r' <- k                  = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(_,ns)) a -> (i,(a,ns))) (toList $ ν st) r , ρ = r' }
+      | 'r' <- k                  = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(a,ns)) s -> (i,(a { α = s },ns))) (toList $ ν st) r , ρ = r' }
       -- step
       | '.' <- k                  = (step st { μ = Play }) { μ = Pause }
       -- simulations menu

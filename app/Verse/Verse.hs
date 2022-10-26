@@ -10,9 +10,32 @@ import Terminal.Game (
    color, rgbColor, paletteColor,
    sRGB24, sRGBBounded, sRGB, sRGB24read,
    xterm6LevelRGB, xterm24LevelGray, xtermSystem )
-import Data.Word ( Word8 )
 import Control.Arrow
 import Data.Tuple ( swap )
+
+-- art
+
+pixel :: Atom -> Char
+pixel a
+   | Plasma <- υ a = " ·~+=≠co" !! fromEnum (α a)
+   | _ <- υ a = 'x'
+-- | _ <- υ a = '#'
+-- | _ <- υ a = ':'
+-- | _ <- υ a = '>'
+-- | _ <- υ a = '<'
+-- | _ <- υ a = ".',\":;*^" !! fromEnum (α a)
+-- | _ <- υ a = "░▒▓█░▒▓█" !! fromEnum (α a)
+
+stone :: Atom -> Draw
+stone a
+   | S0 <- α a = paletteColor $ xterm6LevelRGB 0 1 0  -- xterm24LevelGray 2
+   | S1 <- α a = paletteColor $ xterm6LevelRGB 0 1 1  -- xterm24LevelGray 5
+   | S2 <- α a = paletteColor $ xterm6LevelRGB 1 1 2  -- xterm24LevelGray 8
+   | S3 <- α a = paletteColor $ xterm6LevelRGB 2 1 3  -- xterm24LevelGray 11
+   | S4 <- α a = paletteColor $ xterm6LevelRGB 3 1 4  -- xterm24LevelGray 14
+   | S5 <- α a = paletteColor $ xterm6LevelRGB 4 2 5  -- xterm24LevelGray 17
+   | S6 <- α a = paletteColor $ xterm6LevelRGB 5 3 5  -- xterm24LevelGray 23
+   | S7 <- α a = paletteColor $ xterm6LevelRGB 5 4 5  -- xterm24LevelGray 23
 
 {- Each node connects to it's adjacent 6
 
@@ -38,36 +61,35 @@ import Data.Tuple ( swap )
 
 -}
 
-pixel :: Some -> Char
-pixel = (" ·~+=≠co" !!) . fromEnum
+-- initial state
 
-stone :: Some -> Draw
-stone S0 = paletteColor $ xterm6LevelRGB 0 1 0  -- xterm24LevelGray 2
-stone S1 = paletteColor $ xterm6LevelRGB 0 1 1  -- xterm24LevelGray 5
-stone S2 = paletteColor $ xterm6LevelRGB 1 1 2  -- xterm24LevelGray 8
-stone S3 = paletteColor $ xterm6LevelRGB 2 1 3  -- xterm24LevelGray 11
-stone S4 = paletteColor $ xterm6LevelRGB 3 1 4  -- xterm24LevelGray 14
-stone S5 = paletteColor $ xterm6LevelRGB 4 2 5  -- xterm24LevelGray 17
-stone S6 = paletteColor $ xterm6LevelRGB 5 3 5  -- xterm24LevelGray 23
-stone S7 = paletteColor $ xterm6LevelRGB 5 4 5  -- xterm24LevelGray 23
+state :: State
+state = State {
+   ν = verse ,
+   λ = Test ,
+   σ = Terra ,
+   ρ = [] ,
+   ι = ' ' ,
+   φ = 0 ,
+   τ = mempty ,
+   κ = 0 ,
+   μ = Pause }
+
+-- initial universe
 
 verse :: Verse
-verse = fromList $ take (width * height) $ (id &&& atom) <$> [0..]
-
-atom :: Int -> Node
-atom i = (Atom S1,adjacents)
+verse = fromList $ take (width * height) $ (id &&& n) <$> [0..]
    where
-   adjacents = ($ i) . move 1 <$> total
--- (x,y) = indexToCoord i
--- (q,r) = quotRem i width
+   n :: Int -> Node
+   n i = (atom , ($ i) . move 1 <$> total)
 
 -- get node sval
 sal :: Node -> Int
-sal (Atom s,_) = fromEnum s
+sal (a,_) = fromEnum (α a)
 
 -- update node sval
 sup :: (Some -> Some) -> Node -> Node
-sup f (Atom s,ns) = (Atom $ f s , ns)
+sup f (a,ns) = (a { α = f (α a) } , ns)
 
 -- update specific atom sval in verse
 val :: Verse -> Int -> Int
@@ -75,16 +97,16 @@ val v i = sal (v ! i)
 
 -- update specific atom sval in verse
 vup :: (Some -> Some) -> Int -> Verse -> Verse
-vup f i v = adjust (sup f) i v
+vup f = adjust (sup f)
+
+distance :: Int -> Int -> Float
+distance a b = undefined
 
 coordToIndex :: (Int,Int) -> Int
 coordToIndex (x,y) = y * width + x
 
 indexToCoord :: Int -> (Int,Int)
 indexToCoord = swap . flip divMod width
-
-distance :: Int -> Int -> Float
-distance a b = undefined
 
 move :: Int -> Dir -> Int -> Int
 move n d i
