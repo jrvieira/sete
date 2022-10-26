@@ -1,9 +1,8 @@
 module Verse.Sim where
 
 import Zero.Zero
-
-import Verse.Types
 import Verse.Verse
+import Data.Foldable ( toList )
 
 sim :: State -> Node -> Node
 sim st n@(a,ns)
@@ -29,29 +28,29 @@ sim st n@(a,ns)
       leq = length $ filter (== sal n) nvs
       lgt = length $ filter (>  sal n) nvs
       llt = length $ filter (<  sal n) nvs
-      nvs = sal . (ν st !) <$> ns
+      nvs = toList $ val (ν st) <$> ns
    -- avg = div (sum (sal . (ν st !) <$> ns)) (genericLength ns)
 
    gene :: [Int] -> [Int] -> Int -> Node
    gene survive born i
       | length (filter (== 7) nvs) ∈ survive , sal n > (i-2) = sup (const S7) n
       | length (filter (== 7) nvs) ∈ born , sal n < 1 = sup (const S7) n
-      | sal n <= (i-2) = sup prev n
+      | sal n <= (i - 2) = sup prev n
       | otherwise = sup (const $ toEnum (i-2)) n
       where
-      nvs = sal . (ν st !) <$> ns
+      nvs = toList $ val (ν st) <$> ns
 
    smoke :: Node
       | length (filter (== minimum nvs) nvs) <= (sal n - minimum nvs) = sup prev n
       | sum (filter (> sal n) nvs) > 6 = sup next n
       | otherwise = n
       where
-      nvs = sal . (ν st !) <$> ns
+      nvs = toList $ val (ν st) <$> ns
 
    bees :: Node
       | length (filter (> sal n) nvs) ∈ [2] = sup next n
       | length (filter (> sal n) nvs) ∈ [2] = n
       | otherwise = sup prev n
       where
-      nvs = sal . (ν st !) <$> ns
+      nvs = toList $ val (ν st) <$> ns
 

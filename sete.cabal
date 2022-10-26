@@ -15,7 +15,6 @@ executable seis
    other-modules: Zero.Zero
       , Zero.Color
       , Verse.Conf
-      , Verse.Types
       , Verse.Verse
       , Verse.Sim
    -- LANGUAGE extensions used by modules in this package.

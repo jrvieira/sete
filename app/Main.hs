@@ -2,7 +2,6 @@ module Main where
 
 import Zero.Zero hiding ( (#) )
 import Verse.Conf
-import Verse.Types
 import Verse.Verse
 import Verse.Sim
 
@@ -28,7 +27,7 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
    where
 
    fi = φ st
-   (f,fis) = ν st ! fi
+   (f,fis) = get (ν st) fi
 
    -- get cell from any coord relative to origin
    cells :: [Draw]
@@ -51,7 +50,7 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
          -- Some value
          s = head . show $ sal (a,ns)
          p = pixel (λ st) a
-         (a,ns) = ν st ! n
+         (a,ns) = get (ν st) n
          -- get index of node taking scroll into account
          n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
             where
@@ -71,7 +70,7 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
 
       focus = word (show $ indexToCoord $ φ st) # k (color Cyan Dull)
       layer = word (show (λ st)) # k (color White Dull)
-      stat = word (show $ sum $ sal <$> elems (ν st)) # k (color Yellow Dull)
+      stat = word (show $ sum $ val (ν st) <$> take (width * height) [0..]) # k (color Yellow Dull)
       invi = word (show $ ι st) # k (color Magenta Dull)
       (fw,_) = planeSize focus
       (lw,_) = planeSize layer
@@ -96,14 +95,14 @@ catch _ st (KeyPress k) = st' { ι = k }
    where
 
    fi = φ st
-   (f,fis) = ν st ! fi
+   (f,fis) = get (ν st) fi
 
    st'
       -- zero out
       | 'z' <- k                 = st { ν = sup (const S0) <$> ν st }
       | 'f' <- k                 = st { ν = sup (const S7) <$> ν st }
       -- randomise
-      | 'r' <- k                 = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(a,ns)) s -> (i,(a { α = s },ns))) (toList $ ν st) r , ρ = r' }
+      | 'r' <- k                 = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = verse (atom Plasma <$> r) , ρ = r' }
       -- step
       | '.' <- k                 = (step st { μ = Play }) { μ = Pause }
       -- simulations menu
@@ -141,8 +140,8 @@ catch _ st (KeyPress k) = st' { ι = k }
       | 'N' <- k                 = st { κ = move (negate 1) N (κ st) }
       | 'M' <- k                 = st { κ = move (negate 1) M (κ st) }
       -- target
-      | 'T' <- k , Atom {} <- f  = st { τ = insert fi mempty }
-      | 't' <- k , Atom {} <- f  = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }
+      | 'T' <- k , Atom {} <- f  = st { τ = single fi }
+      | 't' <- k , Atom {} <- f  = st { τ = if fi ∈ τ st then single fi ∩ τ st else single fi ∪ τ st }
       -- manipulation
       | '0' <- k                 = st { ν = vup (const S0) fi (ν st) }
       | '1' <- k                 = st { ν = vup (const S1) fi (ν st) }
