@@ -55,7 +55,7 @@ data State = State {
    ν :: Verse ,
    λ :: Layer ,
    σ :: Sim ,
-   ρ :: [Some] ,  -- random numbers
+   ρ :: [Some] ,  -- randoms
    ι :: Char ,  -- last input
    φ :: Int ,  -- focused atom
    τ :: Set Int ,  -- targeted atoms

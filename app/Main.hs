@@ -37,14 +37,14 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
       hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
       go (x,y)
          | Menu <- μ st        = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-         | selected , targeted = c %.< cell s # color Red   Dull
-         | adjacent , targeted = c %.< cell p # color Red   Dull
-         |            targeted = c %.< cell p # color Red   Dull
-         | selected            = c %.< cell s # color Cyan  Dull
-         | adjacent            = c %.< cell p # color Cyan  Dull
+         | selected , targeted = c %.< cell s # color Red Dull
+         | adjacent , targeted = c %.< cell p # color Red Dull
+         |            targeted = c %.< cell p # color Red Dull
+         | selected            = c %.< cell s # color Cyan Dull
+         | adjacent            = c %.< cell p # color Cyan Dull
          | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
          | Atom {} <- a        = c %.< cell p # stone a
-      -- | otherwise           = c %.< cell '?' # color White Dull
+         | otherwise           = c %.< cell '?' # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
          c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
