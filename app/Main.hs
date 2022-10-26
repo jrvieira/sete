@@ -8,7 +8,6 @@ import Verse.Sim
 
 import Terminal.Game
 import System.Random ( randomRs, initStdGen )
-import Data.Set ( insert, delete )
 import Data.Bifunctor ( bimap )
 import Control.Monad ( join )
 
@@ -23,7 +22,7 @@ main = do
       gQuitFunction = const False }
 
 render :: GEnv -> State -> Plane
-render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (pred (2 * radius) + 2 * marginY)) $ concat [
+render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)) $ concat [
    cells ,
    ui ]
    where
@@ -35,8 +34,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
    cells :: [Draw]
    cells = map go hexagon
       where
-      hexagon = [ (x,y) | x <- [-r..r] , y <- [-r..r] , abs (x + y) < radius ]
-      r = pred radius
+      hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
       go (x,y)
          | Menu <- μ st        = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
          | selected , targeted = c %.< cell s # color Red   Dull
@@ -49,13 +47,13 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
       -- | otherwise           = c %.< cell '?' # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
-         c = join bimap succ (y + r + marginY , 2 * (x + r + marginX) + y)
+         c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
          -- Some value
          s = head . show $ sal (a,ns)
          p = pixel a
          (a,ns) = ν st ! n
          -- get index of node taking scroll into account
-         n = move mx L . move my I $ coordToIndex (mod (x - div y height * r) width , mod y height)
+         n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
             where
             (mx,my) = indexToCoord (κ st)
          selected :: Bool = n == fi
@@ -68,8 +66,7 @@ render _ st = foldl (&) (blankPlane (2 * pred (2 * radius) + 2 * 2 * marginX) (p
       (1,fw + 2) % layer ,
       (1,fw + lw + 3) % stat ,
       (1,fw + lw + sw + 4) % invi ,
-      (2,1) % mode
-      ]
+      (2,1) % mode ]
       where
 
       focus = word (show $ indexToCoord $ φ st) # k (color Cyan Dull)

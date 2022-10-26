@@ -8,7 +8,7 @@ import Verse.Verse
 sim :: State -> Node -> Node
 sim st n@(a,ns)
    | Terra  <- σ st = terra
-   | Dois   <- σ st = dois
+   | Smoke  <- σ st = smoke
    | Bees   <- σ st = bees
    | Fish   <- σ st = gene [2] [2] 3
    | Fish2  <- σ st = gene [2,4] [2,4] 3
@@ -41,7 +41,7 @@ sim st n@(a,ns)
       where
       nvs = sal . (ν st !) <$> ns
 
-   dois :: Node
+   smoke :: Node
       | length (filter (== minimum nvs) nvs) <= (sal n - minimum nvs) = sup prev n
       | sum (filter (> sal n) nvs) > 6 = sup next n
       | otherwise = n

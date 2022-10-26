@@ -48,7 +48,7 @@ type Verse = IntMap Node
 
 data Mode = Play | Pause | Menu
 
-data Sim = Simpl | Dois | Terra | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Id | Nil
+data Sim = Smoke | Terra | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Id | Nil
    deriving ( Show, Eq, Enum, Bounded )
 
 data State = State {

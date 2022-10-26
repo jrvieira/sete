@@ -119,7 +119,7 @@ move n d i
    where
    (x,y) = indexToCoord i
    f (x',y')
-      | y' >= height || y' < 0 = (mod (x' + t * 2 * pred radius) width , mod y' height)
+      | y' >= height || y' < 0 = (mod (x' + t * 2 * radius) width , mod y' height)
       | otherwise = (x' , y')
       where
       t = div y' height  -- outbound multiplier
