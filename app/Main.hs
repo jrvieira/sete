@@ -43,14 +43,14 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
          | selected            = c %.< cell s # color Cyan Dull
          | adjacent            = c %.< cell p # color Cyan Dull
          | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-         | Atom {} <- a        = c %.< cell p # stone a
+         | Atom {} <- a        = c %.< cell p # stone (λ st) a
          | otherwise           = c %.< cell '?' # color White Dull
          where
          -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
          c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
          -- Some value
          s = head . show $ sal (a,ns)
-         p = pixel a
+         p = pixel (λ st) a
          (a,ns) = ν st ! n
          -- get index of node taking scroll into account
          n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
@@ -100,66 +100,66 @@ catch _ st (KeyPress k) = st' { ι = k }
 
    st'
       -- zero out
-      | 'z' <- k                  = st { ν = sup (const S0) <$> ν st }
-      | 'f' <- k                  = st { ν = sup (const S7) <$> ν st }
+      | 'z' <- k                 = st { ν = sup (const S0) <$> ν st }
+      | 'f' <- k                 = st { ν = sup (const S7) <$> ν st }
       -- randomise
-      | 'r' <- k                  = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(a,ns)) s -> (i,(a { α = s },ns))) (toList $ ν st) r , ρ = r' }
+      | 'r' <- k                 = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = fromList $ zipWith (\(i,(a,ns)) s -> (i,(a { α = s },ns))) (toList $ ν st) r , ρ = r' }
       -- step
-      | '.' <- k                  = (step st { μ = Play }) { μ = Pause }
+      | '.' <- k                 = (step st { μ = Play }) { μ = Pause }
       -- simulations menu
-      | 'h' <- k , Menu   <- μ st = st { σ = back (σ st) }
-      | 'j' <- k , Menu   <- μ st = st { σ = back (σ st) }
-      | 'k' <- k , Menu   <- μ st = st { σ = forw (σ st) }
-      | 'l' <- k , Menu   <- μ st = st { σ = forw (σ st) }
-      | 'p' <- k , Menu   <- μ st = st { μ = Play }
-      | '\n'<- k , Menu   <- μ st = st { μ = Pause }  -- close menu
-      | 's' <- k , Menu   <- μ st = st { μ = Pause }  -- close menu
-      |  _  <- k , Menu   <- μ st = st  -- block other input while in menu
+      | 'h' <- k , Menu  <- μ st = st { σ = back (σ st) }
+      | 'j' <- k , Menu  <- μ st = st { σ = back (σ st) }
+      | 'k' <- k , Menu  <- μ st = st { σ = forw (σ st) }
+      | 'l' <- k , Menu  <- μ st = st { σ = forw (σ st) }
+      | 'p' <- k , Menu  <- μ st = st { μ = Play }
+      | '\n'<- k , Menu  <- μ st = st { μ = Pause }  -- close menu
+      | 's' <- k , Menu  <- μ st = st { μ = Pause }  -- close menu
+      |  _  <- k , Menu  <- μ st = st  -- block other input while in menu
       -- open menu
-      | 's' <- k                  = st { μ = Menu }
+      | 's' <- k                 = st { μ = Menu }
       -- pause
-      | 'p' <- k , Pause  <- μ st = st { μ = Play }
-      | 'p' <- k , Play   <- μ st = st { μ = Pause }
+      | 'p' <- k , Pause <- μ st = st { μ = Play }
+      | 'p' <- k , Play  <- μ st = st { μ = Pause }
       -- movement
-      | 'h' <- k                  = st { φ = move 1 H fi }
-      | 'j' <- k                  = st { φ = move 1 N fi }
-      | 'k' <- k                  = st { φ = move 1 I fi }
-      | 'l' <- k                  = st { φ = move 1 L fi }
-      | 'u' <- k                  = st { φ = move 1 U fi }
-      | 'i' <- k                  = st { φ = move 1 I fi }
-      | 'n' <- k                  = st { φ = move 1 N fi }
-      | 'm' <- k                  = st { φ = move 1 M fi }
-      | 'c' <- k                  = st { φ = κ st }  -- focus on center
+      | 'h' <- k                 = st { φ = move 1 H fi }
+      | 'j' <- k                 = st { φ = move 1 N fi }
+      | 'k' <- k                 = st { φ = move 1 I fi }
+      | 'l' <- k                 = st { φ = move 1 L fi }
+      | 'u' <- k                 = st { φ = move 1 U fi }
+      | 'i' <- k                 = st { φ = move 1 I fi }
+      | 'n' <- k                 = st { φ = move 1 N fi }
+      | 'm' <- k                 = st { φ = move 1 M fi }
+      | 'c' <- k                 = st { φ = κ st }  -- focus on center
       -- scroll
-      | 'C' <- k                  = st { κ = φ st }  -- center on focus
-      | 'H' <- k                  = st { κ = move (negate 1) H (κ st) }
-      | 'J' <- k                  = st { κ = move (negate 1) N (κ st) }
-      | 'K' <- k                  = st { κ = move (negate 1) I (κ st) }
-      | 'L' <- k                  = st { κ = move (negate 1) L (κ st) }
-      | 'U' <- k                  = st { κ = move (negate 1) U (κ st) }
-      | 'I' <- k                  = st { κ = move (negate 1) I (κ st) }
-      | 'N' <- k                  = st { κ = move (negate 1) N (κ st) }
-      | 'M' <- k                  = st { κ = move (negate 1) M (κ st) }
+      | 'C' <- k                 = st { κ = φ st }  -- center on focus
+      | 'H' <- k                 = st { κ = move (negate 1) H (κ st) }
+      | 'J' <- k                 = st { κ = move (negate 1) N (κ st) }
+      | 'K' <- k                 = st { κ = move (negate 1) I (κ st) }
+      | 'L' <- k                 = st { κ = move (negate 1) L (κ st) }
+      | 'U' <- k                 = st { κ = move (negate 1) U (κ st) }
+      | 'I' <- k                 = st { κ = move (negate 1) I (κ st) }
+      | 'N' <- k                 = st { κ = move (negate 1) N (κ st) }
+      | 'M' <- k                 = st { κ = move (negate 1) M (κ st) }
       -- target
-      | 'T' <- k , Atom {} <- f   = st { τ = insert fi mempty }
-      | 't' <- k , Atom {} <- f   = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }
+      | 'T' <- k , Atom {} <- f  = st { τ = insert fi mempty }
+      | 't' <- k , Atom {} <- f  = st { τ = if fi ∈ τ st then delete fi (τ st) else insert fi (τ st) }
       -- manipulation
-      | '0' <- k                  = st { ν = vup (const S0) fi (ν st) }
-      | '1' <- k                  = st { ν = vup (const S1) fi (ν st) }
-      | '2' <- k                  = st { ν = vup (const S2) fi (ν st) }
-      | '3' <- k                  = st { ν = vup (const S3) fi (ν st) }
-      | '4' <- k                  = st { ν = vup (const S4) fi (ν st) }
-      | '5' <- k                  = st { ν = vup (const S5) fi (ν st) }
-      | '6' <- k                  = st { ν = vup (const S6) fi (ν st) }
-      | '7' <- k                  = st { ν = vup (const S7) fi (ν st) }
-      | '=' <- k                  = st { ν = vup next fi (ν st) }
-      | '+' <- k                  = st { ν = vup next fi (ν st) }
-      | '-' <- k                  = st { ν = vup prev fi (ν st) }
+      | '0' <- k                 = st { ν = vup (const S0) fi (ν st) }
+      | '1' <- k                 = st { ν = vup (const S1) fi (ν st) }
+      | '2' <- k                 = st { ν = vup (const S2) fi (ν st) }
+      | '3' <- k                 = st { ν = vup (const S3) fi (ν st) }
+      | '4' <- k                 = st { ν = vup (const S4) fi (ν st) }
+      | '5' <- k                 = st { ν = vup (const S5) fi (ν st) }
+      | '6' <- k                 = st { ν = vup (const S6) fi (ν st) }
+      | '7' <- k                 = st { ν = vup (const S7) fi (ν st) }
+      | '=' <- k                 = st { ν = vup next fi (ν st) }
+      | '+' <- k                 = st { ν = vup next fi (ν st) }
+      | '-' <- k                 = st { ν = vup prev fi (ν st) }
       -- layer
-      | 'v' <- k                  = st { λ = forw (λ st) }
-      | 'V' <- k                  = st { λ = back (λ st) }
+      | 'v' <- k                 = st { λ = forw (λ st) }
+      | 'V' <- k                 = st { λ = back (λ st) }
       -- nothing
-      | otherwise                 = st
+      | otherwise                = st
 
 step :: State -> State
 step st

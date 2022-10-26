@@ -15,8 +15,8 @@ import Data.Tuple ( swap )
 
 -- art
 
-pixel :: Atom -> Char
-pixel a
+pixel :: Layer -> Atom -> Char
+pixel l a
    | Plasma <- υ a = " ·~+=≠co" !! fromEnum (α a)
    | _ <- υ a = 'x'
 -- | _ <- υ a = '#'
@@ -26,8 +26,8 @@ pixel a
 -- | _ <- υ a = ".',\":;*^" !! fromEnum (α a)
 -- | _ <- υ a = "░▒▓█░▒▓█" !! fromEnum (α a)
 
-stone :: Atom -> Draw
-stone a
+stone :: Layer -> Atom -> Draw
+stone l a
    | S0 <- α a = paletteColor $ xterm6LevelRGB 0 1 0  -- xterm24LevelGray 2
    | S1 <- α a = paletteColor $ xterm6LevelRGB 0 1 1  -- xterm24LevelGray 5
    | S2 <- α a = paletteColor $ xterm6LevelRGB 1 1 2  -- xterm24LevelGray 8
