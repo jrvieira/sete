@@ -98,7 +98,7 @@ pixel st (x,y) = c %.< cell chr # clr
       | Atom {} <- a                   = stone
       | otherwise                      = color White Dull
 
-   greyed :: Draw = paletteColor (xterm24LevelGray $ max 3 $ 2 + 2 * fromEnum s)
+   greyed :: Draw = paletteColor (xterm24LevelGray $ max 3 $ fromEnum s + 2 * fromEnum s)
 
    stone :: Draw
       |                    Error  <- u           = paletteColor $ xterm6LevelRGB 1 0 0
