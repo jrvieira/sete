@@ -1,24 +1,19 @@
 
 module Verse.Verse where
 
-import Verse.Conf
 
+import Prelude hiding ( lookup )
+
+import Verse.Conf
 import Zero.Zero
 
 import System.Random ( Random(..) )
-import Terminal.Game (
-   Draw,
-   -- * color reexports
-   -- | make color from value
-   color, rgbColor, paletteColor,
-   sRGB24, sRGBBounded, sRGB, sRGB24read,
-   xterm6LevelRGB, xterm24LevelGray, xtermSystem )
 
-import Data.IntMap qualified as IntMap ( fromList, toList )
-import Data.Map.Strict qualified as Map ( fromList, toList )
-import Data.IntMap ( IntMap, (!?), adjust, elems, insert )
-import Data.Map.Strict ( Map )
-import Data.Set ( Set, insert, delete, singleton )
+import Data.IntMap qualified as IntMap ( fromList, insert, adjust )
+import Data.Map.Strict qualified as Map ( fromList, adjust )
+import Data.IntMap ( IntMap, (!?) )
+import Data.Map.Strict ( Map, lookup )
+import Data.Set ( Set )
 import Data.Tuple ( swap )
 import Control.Arrow
 
@@ -27,6 +22,8 @@ import Control.Arrow
 data State = State {
    ν :: Verse ,
    λ :: Layer ,
+   ε :: Element ,  -- element
+   ο :: Unit ,  -- object
    σ :: Sim ,
    ρ :: [Some] ,  -- randoms
    ι :: Char ,  -- last input
@@ -38,7 +35,9 @@ data State = State {
 state :: State
 state = State {
    ν = verse (repeat (atom Plasma S1)) ,
-   λ = Test ,
+   λ = Superficial ,
+   ε = Ψ ,  -- element
+   ο = Plasma ,
    σ = Terra ,
    ρ = [] ,
    ι = ' ' ,
@@ -53,48 +52,53 @@ state = State {
 data Some = S0 | S1 | S2 | S3 | S4 | S5 | S6 | S7
    deriving ( Eq, Ord, Enum, Bounded )
 
+-- instance Num Some where
+--    a + b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a + fromEnum b)
+--    a - b = toEnum $ max (fromEnum $ (minBound :: Some)) (fromEnum a - fromEnum b)
+--    a * b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a * fromEnum b)
+--    abs = id
+--    signum = const 1
+--    fromInteger = toEnum . fromIntegral
+
 instance Random Some where
    random g = let (r, g') = randomR (0,7) g in (toEnum r , g')
    randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
 
 instance Semigroup Some where
-   a <> b = toEnum $ min 7 (fromEnum a + fromEnum b)
+   a <> b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a + fromEnum b)
 
 instance Monoid Some where
-   mempty = S0
+   mempty = minBound
 
 -- game modes
 data Mode = Play | Pause | Menu
 
 -- simulations
-data Sim = Smoke | Terra | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Id | Nil
+data Sim = Smoke | Terra | Id | Noise | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Nil
    deriving ( Show, Eq, Enum, Bounded )
 
 -- GRAPH
 
--- units
-data Unit = Error | Void | Plasma
-
 -- elements
-data Element = Δ | Ω
-   deriving ( Show, Eq, Ord )
+data Element = Α | Ω | Φ | Ε | Ψ  -- air, water, fire, earth, aether
+   deriving ( Show, Eq, Ord, Enum, Bounded )
+
+-- units
+data Unit = Error | Void | Light | Plant | Cat | Flame | Plasma
+   deriving ( Show, Eq, Ord, Enum, Bounded )
 
 -- ui layers
-data Layer = Superficial | Schematic | Atomic | Elemental | Test
+data Layer = Superficial | Atomic | Elemental | Schematic
    deriving ( Show, Eq, Enum, Bounded )
 
 -- atoms
 data Atom = Atom {
    υ :: Unit ,
    α :: Some ,  -- alpha value
-   ε :: Map Element Some }
+   ς :: Map Element Some }
 
 atom :: Unit -> Some -> Atom
-atom u s = Atom { α = s , υ = u , ε = mempty }
-
-instance Enum Atom where
-   toEnum n = atom Void (toEnum n)
-   fromEnum = fromEnum . α
+atom u s = Atom { α = s , υ = u , ς = Map.fromList $ zip total (repeat minBound) }
 
 {- Each node connects to it's adjacent 6
 
@@ -124,19 +128,17 @@ type Verse = IntMap Node
 type Node = (Atom,Map Dir Int)
 
 verse :: [Atom] -> Verse
-verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void S0))
+verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void minBound))
    where
    n :: (Int,Atom) -> (Int,Node)
    n (i,a) = (i, (a , Map.fromList $ (id &&& ($ i) . move 1) <$> total))
 
--- | Utility functions for getting and setting nested data
+-- utility functions for getting and setting nested data
 -- and abstract over type conversions (like Some -> Int)
 
 -- get node from index
 get :: Verse -> Int -> Node
-get v i
-   | Just n  <- v !? i = n
-   | Nothing <- v !? i = (atom Error S0 , mempty)  -- svalue = error code
+get v i = maybe (atom Error maxBound , mempty) id (v !? i)
 
 -- get node sval
 sal :: Node -> Int
@@ -152,11 +154,21 @@ val v i = sal (get v i)
 
 -- update specific atom sval in verse
 vup :: (Some -> Some) -> Int -> Verse -> Verse
-vup f = adjust (sup f)
+vup f = IntMap.adjust (sup f)
 
--- single element set
-single :: a -> Set a
-single = singleton
+-- get atom's element value
+gel :: Atom -> Element -> Some
+gel a e = maybe minBound id $ lookup e (ς a)
+
+-- update atom's element value
+gup :: Element -> (Some -> Some) -> Atom -> Atom
+gup e f a = a { ς = Map.adjust f e (ς a) }
+
+-- update specific node's element value in verse
+eup :: Element -> (Some -> Some) -> Int -> Verse -> Verse
+eup e f i v = IntMap.insert i (gup e f a , ns) v
+   where
+   (a,ns) = get v i
 
 -- distance between two nodes
 distance :: Int -> Int -> Float
@@ -190,30 +202,3 @@ move n d i
       | otherwise = (x' , y')
       where
       t = div y' height  -- outbound multiplier
-
--- ART
-
-pixel :: Layer -> Atom -> Char
-pixel l a
-   | Void   <- υ a = ' '
-   | Plasma <- υ a = " ·~+=≠co" !! fromEnum (α a)
-   | _ <- υ a = '?'
--- | _ <- υ a = 'x'
--- | _ <- υ a = '+'
--- | _ <- υ a = ':'
--- | _ <- υ a = '>'
--- | _ <- υ a = '<'
--- | _ <- υ a = ".',\":;*^" !! fromEnum (α a)
--- | _ <- υ a = "░▒▓█░▒▓█" !! fromEnum (α a)
-
-stone :: Layer -> Atom -> Draw
-stone l a
-   | S0 <- α a = paletteColor $ xterm6LevelRGB 0 1 0  -- xterm24LevelGray 2
-   | S1 <- α a = paletteColor $ xterm6LevelRGB 0 1 1  -- xterm24LevelGray 5
-   | S2 <- α a = paletteColor $ xterm6LevelRGB 1 1 2  -- xterm24LevelGray 8
-   | S3 <- α a = paletteColor $ xterm6LevelRGB 2 1 3  -- xterm24LevelGray 11
-   | S4 <- α a = paletteColor $ xterm6LevelRGB 3 1 4  -- xterm24LevelGray 14
-   | S5 <- α a = paletteColor $ xterm6LevelRGB 4 2 5  -- xterm24LevelGray 17
-   | S6 <- α a = paletteColor $ xterm6LevelRGB 5 3 5  -- xterm24LevelGray 23
-   | S7 <- α a = paletteColor $ xterm6LevelRGB 5 4 5  -- xterm24LevelGray 23
-

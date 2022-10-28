@@ -4,15 +4,16 @@ import Zero.Zero hiding ( (#) )
 import Verse.Conf
 import Verse.Verse
 import Verse.Sim
+import Verse.Art
 
 import Terminal.Game
 import System.Random ( randomRs, initStdGen )
-import Data.Bifunctor ( bimap )
-import Control.Monad ( join )
+import Data.List ( intersperse )
+import Data.Set qualified as Set ( insert, delete )
 
 main :: IO ()
 main = do
-   r <- randomRs (S0,S7) <$> initStdGen
+   r <- randomRs (minBound,maxBound) <$> initStdGen
    playGame $ Game {
       gTPS = 16 ,
       gInitState = state { ρ = r } ,
@@ -22,59 +23,26 @@ main = do
 
 render :: GEnv -> State -> Plane
 render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)) $ concat [
-   cells ,
+   map (pixel st) hexagon ,
    ui ]
    where
+
+   hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
 
    fi = φ st
    (f,fis) = get (ν st) fi
 
-   -- get cell from any coord relative to origin
-   cells :: [Draw]
-   cells = map go hexagon
-      where
-      hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
-      go (x,y)
-         | Menu <- μ st        = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-         | selected , targeted = c %.< cell s # color Red Dull
-         | adjacent , targeted = c %.< cell p # color Red Dull
-         |            targeted = c %.< cell p # color Red Dull
-         | selected            = c %.< cell s # color Cyan Dull
-         | adjacent            = c %.< cell p # color Cyan Dull
-         | Pause <- μ st       = c %.< cell p # paletteColor (xterm24LevelGray $ 2 + 2 * fromEnum a)
-         | Atom {} <- a        = c %.< cell p # stone (λ st) a
-         | otherwise           = c %.< cell '?' # color White Dull
-         where
-         -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
-         c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
-         -- Some value
-         s = head . show $ sal (a,ns)
-         p = pixel (λ st) a
-         (a,ns) = get (ν st) n
-         -- get index of node taking scroll into account
-         n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
-            where
-            (mx,my) = indexToCoord (κ st)
-         selected :: Bool = n == fi
-         adjacent :: Bool = n ∈ fis
-         targeted :: Bool = n ∈ τ st
-
    ui :: [Draw]
    ui = [
-      (1,1) % focus ,
-      (1,fw + 2) % layer ,
-      (1,fw + lw + 3) % stat ,
-      (1,fw + lw + sw + 4) % invi ,
-      (2,1) % mode ]
+      (1,1) % (hcat $ intersperse (cell ' ') [focus,layer,stat,invi]) ,
+      (2,1) % mode ,
+      (marginY,1) %.> elements ]
       where
 
-      focus = word (show $ indexToCoord $ φ st) # k (color Cyan Dull)
+      focus = word ((show $ υ f) <> " " <> (show $ indexToCoord fi)) # k (color Cyan Dull)
       layer = word (show (λ st)) # k (color White Dull)
       stat = word (show $ sum $ val (ν st) <$> take (width * height) [0..]) # k (color Yellow Dull)
       invi = word (show $ ι st) # k (color Magenta Dull)
-      (fw,_) = planeSize focus
-      (lw,_) = planeSize layer
-      (sw,_) = planeSize stat
 
       -- inactive color
       k :: Draw -> Draw
@@ -84,10 +52,40 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
 
       mode :: Plane
       mode
-         | Play  <- μ st = word (show $ σ st) # k (paletteColor $ xterm6LevelRGB 3 1 4)
-         | Menu  <- μ st = word (show $ σ st) # color  Cyan  Dull
-         | Pause <- μ st = word (unwords [show $ σ st,"p"]) # color  Black Vivid
+         | Play  <- μ st = word (unwords [show $ σ st    ]) # k (paletteColor $ xterm6LevelRGB 3 1 4)
+         | Menu  <- μ st = word (unwords [show $ σ st    ]) # color Cyan Dull
+         | Pause <- μ st = word (unwords [show $ σ st,"p"]) # color Black Vivid
       -- | otherwise     = word (unwords [show $ σ st,"?"]) # k (color Black Vivid)
+
+      elements :: Plane
+      elements
+         | λ st ∈ [Superficial,Elemental] = vcat $ bar <$> total
+         | otherwise                      = word ""
+         where
+
+         bar :: Element -> Plane
+         bar e = hcat $ intersperse (cell ' ') [
+            level # k c ,
+            point # k id ]
+            where
+
+            point
+               | Superficial <- λ st            = cell symbol # color Black Vivid
+               | Elemental   <- λ st , selected = cell symbol # elementColor e
+               | Elemental   <- λ st            = cell symbol # color Black Vivid
+               | otherwise                      = cell ' '
+
+            level = word $ take (pred $ length (total :: [Some])) $ replicate (fromEnum s) '~' <> repeat ' '
+
+            c
+               | Superficial <- λ st            = elementColor e
+               | Elemental   <- λ st , selected = elementColor e
+               | otherwise                      = color Black Vivid
+
+            symbol = head $ show e
+            s = gel f e
+            selected = e == ε st
+
 
 catch :: GEnv -> State -> Event -> State
 catch _ st Tick = step st
@@ -97,68 +95,113 @@ catch _ st (KeyPress k) = st' { ι = k }
    fi = φ st
    (f,fis) = get (ν st) fi
 
+   m = μ st
+   l = λ st
+   t = τ st
+   e = ε st
+   o = ο st
+   v = ν st
+
+   -- layer aware node update
+   lup :: (Some -> Some) -> Node -> Node
+   lup f n@(a,ns)
+      | Superficial <- λ st = sup f n
+      | Elemental   <- λ st = (gup e f a , ns)
+      | otherwise           = n
+
+   -- layer aware specific node update in verse
+   lvp :: (Some -> Some) -> Int -> Verse -> Verse
+   lvp
+      | Superficial <- λ st = vup
+      | Elemental   <- λ st = eup e
+      | otherwise           = \_ _ -> id
+
+   -- update state
+
    st'
-      -- zero out
-      | 'z' <- k                 = st { ν = sup (const S0) <$> ν st }
-      | 'f' <- k                 = st { ν = sup (const S7) <$> ν st }
       -- randomise
-      | 'r' <- k                 = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = verse (atom Plasma <$> r) , ρ = r' }
+      | 'r' <- k                    = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = foldr ($) v $ zipWith (lvp . const) r [0..] , ρ = r' }
+   -- | 'r' <- k                    = let (r,r') = splitAt (size $ ν st) (ρ st) in st { ν = verse (atom (ο st) <$> r) , ρ = r' }
       -- step
-      | '.' <- k                 = (step st { μ = Play }) { μ = Pause }
+      | 'P' <- k                    = (step st { μ = Play }) { μ = Pause }
       -- simulations menu
-      | 'h' <- k , Menu  <- μ st = st { σ = back (σ st) }
-      | 'j' <- k , Menu  <- μ st = st { σ = back (σ st) }
-      | 'k' <- k , Menu  <- μ st = st { σ = forw (σ st) }
-      | 'l' <- k , Menu  <- μ st = st { σ = forw (σ st) }
-      | 'p' <- k , Menu  <- μ st = st { μ = Play }
-      | '\n'<- k , Menu  <- μ st = st { μ = Pause }  -- close menu
-      | 's' <- k , Menu  <- μ st = st { μ = Pause }  -- close menu
-      |  _  <- k , Menu  <- μ st = st  -- block other input while in menu
+      | 'h' <- k , Menu  <- m       = st { σ = back (σ st) }
+      | 'j' <- k , Menu  <- m       = st { σ = back (σ st) }
+      | 'k' <- k , Menu  <- m       = st { σ = forw (σ st) }
+      | 'l' <- k , Menu  <- m       = st { σ = forw (σ st) }
+      | 'p' <- k , Menu  <- m       = st { μ = Play }
+      | '\n'<- k , Menu  <- m       = st { μ = Pause }  -- close menu
+      | 'S' <- k , Menu  <- m       = st { μ = Pause }  -- close menu
+      |  _  <- k , Menu  <- m       = st  -- block other input while in menu
       -- open menu
-      | 's' <- k                 = st { μ = Menu }
+      | 's' <- k                    = st { μ = Menu }
       -- pause
-      | 'p' <- k , Pause <- μ st = st { μ = Play }
-      | 'p' <- k , Play  <- μ st = st { μ = Pause }
+      | 'p' <- k , Pause <- m       = st { μ = Play }
+      | 'p' <- k , Play  <- m       = st { μ = Pause }
       -- movement
-      | 'h' <- k                 = st { φ = move 1 H fi }
-      | 'j' <- k                 = st { φ = move 1 N fi }
-      | 'k' <- k                 = st { φ = move 1 I fi }
-      | 'l' <- k                 = st { φ = move 1 L fi }
-      | 'u' <- k                 = st { φ = move 1 U fi }
-      | 'i' <- k                 = st { φ = move 1 I fi }
-      | 'n' <- k                 = st { φ = move 1 N fi }
-      | 'm' <- k                 = st { φ = move 1 M fi }
-      | 'c' <- k                 = st { φ = κ st }  -- focus on center
+      | 'h' <- k                    = st { φ = move 1 H fi }
+      | 'j' <- k                    = st { φ = move 1 N fi }
+      | 'k' <- k                    = st { φ = move 1 I fi }
+      | 'l' <- k                    = st { φ = move 1 L fi }
+      | 'u' <- k                    = st { φ = move 1 U fi }
+      | 'i' <- k                    = st { φ = move 1 I fi }
+      | 'n' <- k                    = st { φ = move 1 N fi }
+      | 'm' <- k                    = st { φ = move 1 M fi }
+      | 'c' <- k                    = st { φ = κ st }  -- focus on center
       -- scroll
-      | 'C' <- k                 = st { κ = φ st }  -- center on focus
-      | 'H' <- k                 = st { κ = move (negate 1) H (κ st) }
-      | 'J' <- k                 = st { κ = move (negate 1) N (κ st) }
-      | 'K' <- k                 = st { κ = move (negate 1) I (κ st) }
-      | 'L' <- k                 = st { κ = move (negate 1) L (κ st) }
-      | 'U' <- k                 = st { κ = move (negate 1) U (κ st) }
-      | 'I' <- k                 = st { κ = move (negate 1) I (κ st) }
-      | 'N' <- k                 = st { κ = move (negate 1) N (κ st) }
-      | 'M' <- k                 = st { κ = move (negate 1) M (κ st) }
+      | 'C' <- k                    = st { κ = φ st }  -- center on focus
+      | 'H' <- k                    = st { κ = move 1 H (κ st) , φ = move 1 H fi }
+      | 'J' <- k                    = st { κ = move 1 N (κ st) , φ = move 1 N fi }
+      | 'K' <- k                    = st { κ = move 1 I (κ st) , φ = move 1 I fi }
+      | 'L' <- k                    = st { κ = move 1 L (κ st) , φ = move 1 L fi }
+      | 'U' <- k                    = st { κ = move 1 U (κ st) , φ = move 1 U fi }
+      | 'I' <- k                    = st { κ = move 1 I (κ st) , φ = move 1 I fi }
+      | 'N' <- k                    = st { κ = move 1 N (κ st) , φ = move 1 N fi }
+      | 'M' <- k                    = st { κ = move 1 M (κ st) , φ = move 1 M fi }
       -- target
-      | 'T' <- k , Atom {} <- f  = st { τ = single fi }
-      | 't' <- k , Atom {} <- f  = st { τ = if fi ∈ τ st then single fi ∩ τ st else single fi ∪ τ st }
+      | 'T' <- k , Atom {} <- f     = st { τ = mempty }
+      | 't' <- k , Atom {} <- f     = st { τ = if fi ∈ t then Set.delete fi t else Set.insert fi t }
+
       -- manipulation
-      | '0' <- k                 = st { ν = vup (const S0) fi (ν st) }
-      | '1' <- k                 = st { ν = vup (const S1) fi (ν st) }
-      | '2' <- k                 = st { ν = vup (const S2) fi (ν st) }
-      | '3' <- k                 = st { ν = vup (const S3) fi (ν st) }
-      | '4' <- k                 = st { ν = vup (const S4) fi (ν st) }
-      | '5' <- k                 = st { ν = vup (const S5) fi (ν st) }
-      | '6' <- k                 = st { ν = vup (const S6) fi (ν st) }
-      | '7' <- k                 = st { ν = vup (const S7) fi (ν st) }
-      | '=' <- k                 = st { ν = vup next fi (ν st) }
-      | '+' <- k                 = st { ν = vup next fi (ν st) }
-      | '-' <- k                 = st { ν = vup prev fi (ν st) }
-      -- layer
-      | 'v' <- k                 = st { λ = forw (λ st) }
-      | 'V' <- k                 = st { λ = back (λ st) }
+
+      | ')' <- k                    = st { ν = lup (const S0) <$> v }
+      | '!' <- k                    = st { ν = lup (const S1) <$> v }
+      | '@' <- k                    = st { ν = lup (const S2) <$> v }
+      | '#' <- k                    = st { ν = lup (const S3) <$> v }
+      | '$' <- k                    = st { ν = lup (const S4) <$> v }
+      | '%' <- k                    = st { ν = lup (const S5) <$> v }
+      | '^' <- k                    = st { ν = lup (const S6) <$> v }
+      | '&' <- k                    = st { ν = lup (const S7) <$> v }
+
+      | '0' <- k                    = st { ν = lvp (const S0) fi v }
+      | '1' <- k                    = st { ν = lvp (const S1) fi v }
+      | '2' <- k                    = st { ν = lvp (const S2) fi v }
+      | '3' <- k                    = st { ν = lvp (const S3) fi v }
+      | '4' <- k                    = st { ν = lvp (const S4) fi v }
+      | '5' <- k                    = st { ν = lvp (const S5) fi v }
+      | '6' <- k                    = st { ν = lvp (const S6) fi v }
+      | '7' <- k                    = st { ν = lvp (const S7) fi v }
+      | '=' <- k                    = st { ν = lvp next fi v }
+      | '+' <- k                    = st { ν = lvp next fi v }
+      | '-' <- k                    = st { ν = lvp prev fi v }
+
+      -- change layer
+      | 'v' <- k                    = st { λ = forw l }
+      | 'V' <- k                    = st { λ = back l }
+      -- change layer
+      | '<' <- k                    = st { λ = forw l }
+      | '>' <- k                    = st { λ = back l }
+      | ' ' <- k                    = st { λ = Superficial }
+      | 'a' <- k                    = st { λ = Atomic }
+      | 'e' <- k                    = st { λ = Elemental }
+      | 'x' <- k                    = st { λ = Schematic }
+      -- change sublayer
+      | '.' <- k , Superficial <- l = st { ο = back o }
+      | ',' <- k , Superficial <- l = st { ο = forw o }
+      | '.' <- k , Elemental <- l   = st { ε = back e }
+      | ',' <- k , Elemental <- l   = st { ε = forw e }
       -- nothing
-      | otherwise                = st
+      | otherwise                   = st
 
 step :: State -> State
 step st

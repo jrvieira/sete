@@ -2,13 +2,23 @@ module Verse.Conf where
 
 -- testing
 
-test = True :: Bool
+test :: Bool
+test = True
 
 -- verse
 
-radius = 11 :: Int
+radius :: Int
+radius = 11
 
-(width,height) = (3 * radius , radius) :: (Int,Int)
+width :: Int
+width = 3 * radius
 
-(marginX,marginY) = (2,3) :: (Int,Int)
+height :: Int
+height = radius
+
+marginX :: Int
+marginX = 2
+
+marginY :: Int
+marginY = 3
 
