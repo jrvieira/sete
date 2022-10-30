@@ -34,12 +34,12 @@ render _ st = foldl (&) (blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (s
 
    ui :: [Draw]
    ui = [
-      (1,1) % (hcat $ intersperse (cell ' ') [focus,layer,stat,invi]) ,
+      (1,1) % hcat (intersperse (cell ' ') [focus,layer,stat,invi]) ,
       (2,1) % mode ,
       (marginY,1) %.> elements ]
       where
 
-      focus = word ((show $ υ f) <> " " <> (show $ indexToCoord fi)) # k (color Cyan Dull)
+      focus = word (show (υ f) <> " " <> show (indexToCoord fi)) # k (color Cyan Dull)
       layer = word (show (λ st)) # k (color White Dull)
       stat = word (show $ sum $ val (ν st) <$> take (width * height) [0..]) # k (color Yellow Dull)
       invi = word (show $ ι st) # k (color Magenta Dull)

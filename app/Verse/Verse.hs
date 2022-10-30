@@ -65,7 +65,7 @@ instance Random Some where
    randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
 
 instance Semigroup Some where
-   a <> b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a + fromEnum b)
+   a <> b = toEnum $ min (fromEnum (maxBound :: Some)) (fromEnum a + fromEnum b)
 
 instance Monoid Some where
    mempty = minBound
