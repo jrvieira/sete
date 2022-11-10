@@ -1,104 +1,17 @@
-
 module Verse.Verse where
 
-
-import Prelude hiding ( lookup )
-
-import Verse.Conf
 import Zero.Zero
 
+import Verse.Conf
+
 import System.Random ( Random(..) )
-
-import Data.IntMap qualified as IntMap ( fromList, insert, adjust )
-import Data.Map.Strict qualified as Map ( fromList, adjust )
-import Data.IntMap ( IntMap, (!?) )
-import Data.Map.Strict ( Map, lookup )
-import Data.Set ( Set )
 import Data.Tuple ( swap )
+import Data.IntSet ( IntSet )
+import Data.IntMap ( IntMap )
+import Data.IntMap qualified as IntMap ( fromList, adjust )
+import Data.Map.Strict ( Map )
+import Data.Map.Strict qualified as Map ( fromList, adjust )
 import Control.Arrow
-
--- STATE
-
-data State = State {
-   ν :: Verse ,
-   λ :: Layer ,
-   ε :: Element ,  -- element
-   ο :: Unit ,  -- object
-   σ :: Sim ,
-   ρ :: [Some] ,  -- randoms
-   ι :: Char ,  -- last input
-   φ :: Int ,  -- focused atom
-   τ :: Set Int ,  -- targeted atoms
-   κ :: Int ,  -- center
-   μ :: Mode }
-
-state :: State
-state = State {
-   ν = verse (repeat (atom Plasma S1)) ,
-   λ = Superficial ,
-   ε = Ψ ,  -- element
-   ο = Plasma ,
-   σ = Terra ,
-   ρ = [] ,
-   ι = ' ' ,
-   φ = 0 ,
-   τ = mempty ,
-   κ = 0 ,
-   μ = Pause }
-
--- DATA
-
--- base val (~ Word3)
-data Some = S0 | S1 | S2 | S3 | S4 | S5 | S6 | S7
-   deriving ( Eq, Ord, Enum, Bounded )
-
--- instance Num Some where
---    a + b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a + fromEnum b)
---    a - b = toEnum $ max (fromEnum $ (minBound :: Some)) (fromEnum a - fromEnum b)
---    a * b = toEnum $ min (fromEnum $ (maxBound :: Some)) (fromEnum a * fromEnum b)
---    abs = id
---    signum = const 1
---    fromInteger = toEnum . fromIntegral
-
-instance Random Some where
-   random g = let (r, g') = randomR (0,7) g in (toEnum r , g')
-   randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
-
-instance Semigroup Some where
-   a <> b = toEnum $ min (fromEnum (maxBound :: Some)) (fromEnum a + fromEnum b)
-
-instance Monoid Some where
-   mempty = minBound
-
--- game modes
-data Mode = Play | Pause | Menu
-
--- simulations
-data Sim = Smoke | Terra | Id | Noise | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Nil
-   deriving ( Show, Eq, Enum, Bounded )
-
--- GRAPH
-
--- elements
-data Element = Α | Ω | Φ | Ε | Ψ  -- air, water, fire, earth, aether
-   deriving ( Show, Eq, Ord, Enum, Bounded )
-
--- units
-data Unit = Error | Void | Light | Plant | Cat | Flame | Plasma
-   deriving ( Show, Eq, Ord, Enum, Bounded )
-
--- ui layers
-data Layer = Superficial | Atomic | Elemental | Schematic
-   deriving ( Show, Eq, Enum, Bounded )
-
--- atoms
-data Atom = Atom {
-   υ :: Unit ,
-   α :: Some ,  -- alpha value
-   ς :: Map Element Some }
-
-atom :: Unit -> Some -> Atom
-atom u s = Atom { α = s , υ = u , ς = Map.fromList $ zip total (repeat minBound) }
 
 {- Each node connects to it's adjacent 6
 
@@ -124,65 +37,113 @@ atom u s = Atom { α = s , υ = u , ς = Map.fromList $ zip total (repeat minBou
 
 -}
 
-type Verse = IntMap Node
+-- level
+
+data Level = L0 | L1 | L2 | L3 | L4 | L5 | L6 | L7
+   deriving ( Eq, Enum, Bounded )
+
+instance Num Level where
+   a + b = toEnum $ min (fromEnum (maxBound :: Level)) (fromEnum a + fromEnum b)
+   a - b = toEnum $ max (fromEnum (minBound :: Level)) (fromEnum a - fromEnum b)
+   a * b = toEnum $ min (fromEnum (maxBound :: Level)) (fromEnum a * fromEnum b)
+   abs = id
+   signum = const 1
+   fromInteger = toEnum . fromInteger
+
+instance Random Level where
+   random g = let (r,g') = randomR (0,7) g in (toEnum r , g')
+   randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
+
+-- elements
+
+data Element = Air | Water | Fire | Earth | Aether  -- air, water, fire, earth, aether
+   deriving ( Eq, Enum, Bounded, Show, Ord )
+
+-- units
+
+data Unit = Void | Light | Plant | Cat | Flame | Plasma | Computer | Pipe | Wire
+   deriving ( Eq, Enum, Bounded, Show, Ord )
+
+-- ui layers
+
+data Layer = Superficial | Elemental | Schematic
+   deriving ( Eq, Enum, Bounded, Show )
+
+-- game modes
+
+data Mode = Play | Pause | Menu
+
+-- simulations
+
+data Sim = Smoke | Terra | Id | Noise | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Nil
+   deriving ( Show, Eq, Enum, Bounded )
+
+-- state
+
+data State = State {
+   ν :: Verse ,
+   λ :: Layer ,
+   ε :: Element ,
+   ο :: Unit ,
+   σ :: Sim ,
+   ρ :: [Level] ,  -- randoms
+   ι :: Char ,  -- last input
+   φ :: Int ,  -- focused atom
+   τ :: IntSet ,  -- targeted atoms
+   κ :: Int ,  -- center
+   μ :: Mode }
+
+state :: State
+state = State {
+   ν = verse $ repeat $ atom Plasma ,
+   λ = Superficial ,
+   ε = minBound ,
+   ο = minBound ,
+   σ = Terra ,
+   ρ = [] ,
+   ι = ' ' ,
+   φ = 0 ,
+   τ = mempty ,
+   κ = 0 ,
+   μ = Pause }
+
+-- atoms
+
+data Atom = Atom { υ :: Unit , ες :: Map Element Level }
+
+atom :: Unit -> Atom
+atom u = Atom { υ = u , ες = Map.fromList $ zip total $ repeat minBound }
+
+-- verse
+
 type Node = (Atom,Map Dir Int)
 
+type Verse = IntMap Node
+
 verse :: [Atom] -> Verse
-verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void minBound))
+verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void))
    where
    n :: (Int,Atom) -> (Int,Node)
    n (i,a) = (i, (a , Map.fromList $ (id &&& ($ i) . move 1) <$> total))
 
--- utility functions for getting and setting nested data
--- and abstract over type conversions (like Some -> Int)
+-- update
 
--- get node from index
-get :: Verse -> Int -> Node
-get v i = maybe (atom Error maxBound , mempty) id (v !? i)
+up :: Element -> (Level -> Level) -> Node -> Node
+up e f (a,ns) = (a { ες = Map.adjust f e (ες a) } , ns)
 
--- get node sval
-sal :: Node -> Int
-sal (a,_) = fromEnum (α a)
+nup :: Element -> (Level -> Level) -> Int -> Verse -> Verse
+nup e f i = IntMap.adjust (up e f) i
 
--- update node sval
-sup :: (Some -> Some) -> Node -> Node
-sup f (a,ns) = (a { α = f (α a) } , ns)
+-- coord
 
--- get specific atom sval in verse
-val :: Verse -> Int -> Int
-val v i = sal (get v i)
-
--- update specific atom sval in verse
-vup :: (Some -> Some) -> Int -> Verse -> Verse
-vup f = IntMap.adjust (sup f)
-
--- get atom's element value
-gel :: Atom -> Element -> Some
-gel a e = maybe minBound id $ lookup e (ς a)
-
--- update atom's element value
-gup :: Element -> (Some -> Some) -> Atom -> Atom
-gup e f a = a { ς = Map.adjust f e (ς a) }
-
--- update specific node's element value in verse
-eup :: Element -> (Some -> Some) -> Int -> Verse -> Verse
-eup e f i v = IntMap.insert i (gup e f a , ns) v
-   where
-   (a,ns) = get v i
-
--- distance between two nodes
 distance :: Int -> Int -> Float
 distance a b = undefined
 
--- convert coords to index
 coordToIndex :: (Int,Int) -> Int
 coordToIndex (x,y) = y * width + x
 
--- convert index to coords
 indexToCoord :: Int -> (Int,Int)
 indexToCoord = swap . flip divMod width
-
--- PLANE
 
 data Dir = U | I | H | L | N | M
    deriving ( Eq, Ord, Enum, Bounded )
@@ -202,3 +163,5 @@ move n d i
       | otherwise = (x' , y')
       where
       t = div y' height  -- outbound multiplier
+
+{- HLINT ignore "Use fromMaybe" -}

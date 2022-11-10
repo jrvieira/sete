@@ -1,6 +1,5 @@
 module Main where
 
-import Verse.Conf
 import Verse.Verse
 import Verse.Sim
 import Verse.Art
@@ -21,27 +20,26 @@ main = do
       gDrawFunction = draw ,
       gQuitFunction = quit }
 
--- | Render the universe
-
 draw :: GEnv -> State -> Plane
-draw _ = foldl (&) canvas . art
+draw _ st = foldl (&) canvas art
 
    where
 
    canvas :: Plane
    canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
 
+   art :: [Draw]
+   art = concat [
+      map (pixel st) hexagon ,
+      ui ]
+
    hexagon :: _
    hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
-
--- | One tick in the simulation
 
 step :: State -> State
 step st
    | Play <- μ st = st { ν = sim st <$> ν st }
    | otherwise = st
-
--- | Catch user input
 
 logic :: GEnv -> State -> Event -> State
 logic _ st Tick = step st
@@ -152,7 +150,5 @@ logic _ st (KeyPress k) = st' { ι = k }
 
       | otherwise                      = st
 
--- | Quit condition
-
-quit :: State -> Bool
+quit :: _
 quit = const False

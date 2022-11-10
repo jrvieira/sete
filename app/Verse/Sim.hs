@@ -6,51 +6,38 @@ import Data.Foldable ( toList )
 
 sim :: State -> Node -> Node
 sim st n@(a,ns)
-   | Terra  <- σ st = terra
-   | Id     <- σ st = id
-   | Noise  <- σ st = noise
-   | Smoke  <- σ st = smoke
-   | Bees   <- σ st = bees
-   | Fish   <- σ st = gene [    2        ] [    2        ] 3
-   | Fish2  <- σ st = gene [    2,  4    ] [    2,  4    ] 3
-   | Glide  <- σ st = gene [    2,  4,5,6] [    2,3,4,5,6] 4
-   | Glide2 <- σ st = gene [  1,  3,4    ] [    2,3,4,5  ] 5
-   | Ripple <- σ st = gene [  1          ] [  1,2,3,4,5,6] 7
-   | Rippl2 <- σ st = gene [  1,2,  4,5,6] [    2,3,4    ] 7
-   | otherwise      = sup (const S1) n
+   | True        = n
+   | Terra  <- s = terra
+   | Noise  <- s = noise
+   | Smoke  <- s = smoke
+   | Bees   <- s = bees
+   | Fish   <- s = gene [    2        ] [    2        ] 3
+   | Fish2  <- s = gene [    2,  4    ] [    2,  4    ] 3
+   | Glide  <- s = gene [    2,  4,5,6] [    2,3,4,5,6] 4
+   | Glide2 <- s = gene [  1,  3,4    ] [    2,3,4,5  ] 5
+   | Ripple <- s = gene [  1          ] [  1,2,3,4,5,6] 7
+   | Rippl2 <- s = gene [  1,2,  4,5,6] [    2,3,4    ] 7
+   | otherwise   = n
 
    where
 
-   -- layer aware getters + setters
+   s = σ st
 
-   -- get value from this node
-   s :: Some
-      | Superficial <- λ st = α a
-      | Elemental   <- λ st = gel a (ε st)
-      | otherwise           = maxBound  -- make errors obvious !
+-- -- get value from this node
+-- s :: Level
 
-   -- set this node's value
-   up :: (Some -> Some) -> Node
-   up f
-      | Superficial <- λ st = sup f n
-      | Elemental   <- λ st = (gup (ε st) f a , ns)
-      | otherwise           = n
+-- -- set this node's value
+-- up :: (Level -> Level) -> Node
 
-   -- get value from other node in verse
-   si :: Int -> Some
-   si i
-      | Superficial <- λ st = α ai
-      | Elemental   <- λ st = gel ai (ε st)
-      | otherwise           = maxBound  -- make errors obvious !
-      where
-      (ai,_) = get (ν st) i
+-- -- get value from other node in verse
+-- si :: Int -> Level
 
 
    gene :: [Int] -> [Int] -> Int -> Node
    gene survive born i
-      | length (filter (== maxBound) nvs) ∈ survive , s > (toEnum $ i-2) = up (const maxBound)
+      | length (filter (== maxBound) nvs) ∈ survive , s > toEnum (i-2) = up (const maxBound)
       | length (filter (== maxBound) nvs) ∈ born , s < succ minBound = up (const maxBound)
-      | s <= (toEnum $ i - 2) = up prev
+      | s <= toEnum (i - 2) = up prev
       | otherwise = up (const $ toEnum (i-2))
       where
       nvs = toList $ si <$> ns
@@ -79,6 +66,5 @@ sim st n@(a,ns)
       where
       nvs = toList $ si <$> ns
 
-   id :: Node = up (const $ α a)
-
    noise :: Node = up (const $ ρ st !! sal n)
+

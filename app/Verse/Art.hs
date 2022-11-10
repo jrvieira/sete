@@ -1,52 +1,20 @@
 module Verse.Art where
 
 import Zero.Zero hiding ( (#) )
-
-import Verse.Conf
 import Verse.Verse
+import Verse.Conf
+import Terminal.Game  -- remove
+import Data.List ( intersperse )
 
-import Terminal.Game
--- color :: Color -> ColorIntensity -> Draw
--- ^
--- ^
+art :: State -> [Draw]
+art st = map pixel hexagon
+   <> ui
 
--- paletteColor :: Word8 -> Draw
--- ^
--- xterm24LevelGray :: Int -> Word8
--- xterm6LevelRGB :: Int -> Int -> Int -> Word8
--- xtermSystem :: ColorIntensity -> Color -> Word8
-
--- rgbColor :: Colour Float -> Draw
--- ^
--- sRGB24 :: (Ord a, Floating a) => Word8 -> Word8 -> Word8 -> Colour a
--- sRGBBounded :: (Ord b, Floating b, Integral a, Bounded a) => a -> a -> a -> Colour b
--- sRGB :: (Ord a, Floating a) => a -> a -> a -> Colour a
--- sRGB24read :: (Ord a, Floating a) => String -> Colour a
-
-import Data.Char ( intToDigit )
-import Data.Bifunctor ( bimap )
-import Control.Monad ( join )
-
--- base color for each element
-
-elementColor :: Element -> Draw
-elementColor e
-   | Α <- e    = color White Dull
-   | Ω <- e    = color Blue Dull
-   | Φ <- e    = color Red Dull
-   | Ε <- e    = color Green Dull
-   | Ψ <- e    = color Magenta Dull
--- |   <- e    = color Cyan Dull  -- reserved for ui (focus)
--- |   <- e    = color Yellow Dull  -- reserved for ui (info)
-   | otherwise = color Black Vivid
-
--- draw atom
-
-pixel :: State -> (Int,Int) -> Draw
-pixel st (x,y) = c %.< cell chr # clr
    where
 
-   s :: Some
+   (f,_) = get (ν st) (φ st)
+
+   s :: Level
       | Superficial <- λ st = α a
       | Elemental   <- λ st = gel a e
       | otherwise           = maxBound  -- make errors obvious !
@@ -55,85 +23,146 @@ pixel st (x,y) = c %.< cell chr # clr
    u = υ a
 
    fi = φ st
-   (f,fis) = get (ν st) fi
    (a,ns) = get (ν st) n
 
-   -- get index of node taking scroll into account
-   n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
+
+   -- | User interface
+
+   ui :: [Draw]
+   ui = [
+      (1,1) % hcat (intersperse (cell ' ') [focus,layer,stat,invi]) ,
+      (2,1) % mode ,
+      (marginY,1) %.> elements ]
+
       where
-      (mx,my) = indexToCoord (κ st)
 
-   -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
-   c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
+      focus = word (show (υ f) <> " " <> show (indexToCoord $ φ st)) # k (color Cyan Dull)
+      layer = word (show (λ st)) # k (color White Dull)
+      stat = word (show $ sum $ val (ν st) <$> take (width * height) [0..]) # k (color Yellow Dull)
+      invi = word (show $ ι st) # k (color Magenta Dull)
 
-   selected :: Bool = n == fi
-   adjacent :: Bool = n ∈ fis
-   targeted :: Bool = n ∈ τ st
+      -- inactive color
+      k :: Draw -> Draw
+      k c
+         | Menu <- μ st = color Black Vivid
+         | otherwise    = c
 
-   chr
-      |                    Void   <- u = ' '
-      | Atomic      <- l               = intToDigit $ fromEnum s
-      | Elemental   <- l               = intToDigit $ fromEnum s
-      | Superficial <- l , Plasma <- u = "·-~+=≠cs" !! fromEnum s
-      | Superficial <- l , Flame  <- u = "#'\"\"^^xx" !! fromEnum s
-   -- |                         _ <- u = 'x'
-   -- |                         _ <- u = '+'
-   -- |                         _ <- u = ':'
-   -- |                         _ <- u = '>'
-   -- |                         _ <- u = '<'
-   -- |                         _ <- u = ".',\":;*^" !! fromEnum s
-   -- |                         _ <- u = "░▒▓█░▒▓█" !! fromEnum s
-      | otherwise                      = '?'
+      mode :: Plane
+      mode
+         | Play  <- μ st = word (unwords [show $ σ st    ]) # k (paletteColor $ xterm6LevelRGB 3 1 4)
+         | Menu  <- μ st = word (unwords [show $ σ st    ]) # color Cyan Dull
+         | Pause <- μ st = word (unwords [show $ σ st,"p"]) # color Black Vivid
+      -- | otherwise     = word (unwords [show $ σ st,"?"]) # k (color Black Vivid)
 
-   clr :: Draw
-      | Menu <- μ st                   = color Black Vivid
-      | selected      , targeted       = color Red Dull
-      | adjacent      , targeted       = color Red Dull
-      |                 targeted       = color Red Dull
-      | selected      , Elemental <- l = elementColor e
-      | selected                       = color Cyan Dull
-      | adjacent      , Elemental <- l = elementColor e
-      | adjacent                       = color Cyan Vivid
-      | Pause <- μ st                  = greyed
-      | Atom {} <- a                   = stone
-      | otherwise                      = color White Dull
+      elements :: Plane
+      elements
+         | λ st ∈ [Superficial,Elemental] = vcat $ bar <$> total
+         | otherwise                      = word ""
+         where
 
-   greyed :: Draw = paletteColor (xterm24LevelGray $ max 3 $ fromEnum s + 2 * fromEnum s)
+         bar :: Element -> Plane
+         bar e = hcat $ intersperse (cell ' ') [
+            level # k c ,
+            point # k id ]
+            where
 
-   stone :: Draw
-      |                    Error  <- u           = paletteColor $ xterm6LevelRGB 1 0 0
-      |                    Void   <- u           = paletteColor $ xterm6LevelRGB 0 0 0
+            point
+               | Superficial <- λ st            = cell symbol # color Black Vivid
+               | Elemental   <- λ st , selected = cell symbol # elementColor e
+               | Elemental   <- λ st            = cell symbol # color Black Vivid
+               | otherwise                      = cell ' '
 
-      -- Units
+            level = word $ take (pred $ length (total :: [Level])) $ replicate (fromEnum s) '~' <> repeat ' '
 
-      | Superficial <- l , Plasma <- u , S0 <- s = paletteColor $ xterm6LevelRGB 0 1 0
-      | Superficial <- l , Plasma <- u , S1 <- s = paletteColor $ xterm6LevelRGB 0 1 1
-      | Superficial <- l , Plasma <- u , S2 <- s = paletteColor $ xterm6LevelRGB 1 1 2
-      | Superficial <- l , Plasma <- u , S3 <- s = paletteColor $ xterm6LevelRGB 2 1 3
-      | Superficial <- l , Plasma <- u , S4 <- s = paletteColor $ xterm6LevelRGB 3 1 4
-      | Superficial <- l , Plasma <- u , S5 <- s = paletteColor $ xterm6LevelRGB 4 2 5
-      | Superficial <- l , Plasma <- u , S6 <- s = paletteColor $ xterm6LevelRGB 5 3 5
-      | Superficial <- l , Plasma <- u , S7 <- s = paletteColor $ xterm6LevelRGB 5 4 5
+            c
+               | Superficial <- λ st            = elementColor e
+               | Elemental   <- λ st , selected = elementColor e
+               | otherwise                      = color Black Vivid
 
-      | Superficial <- l , Flame  <- u , S0 <- s = paletteColor $ xterm6LevelRGB 0 0 1  -- orange
-      | Superficial <- l , Flame  <- u , S1 <- s = paletteColor $ xterm6LevelRGB 1 0 1  -- red
-      | Superficial <- l , Flame  <- u , S2 <- s = paletteColor $ xterm6LevelRGB 2 1 1  -- ...
-      | Superficial <- l , Flame  <- u , S3 <- s = paletteColor $ xterm6LevelRGB 3 2 1
-      | Superficial <- l , Flame  <- u , S4 <- s = paletteColor $ xterm6LevelRGB 4 3 1
-      | Superficial <- l , Flame  <- u , S5 <- s = paletteColor $ xterm6LevelRGB 5 4 2
-      | Superficial <- l , Flame  <- u , S6 <- s = paletteColor $ xterm6LevelRGB 5 5 3
-      | Superficial <- l , Flame  <- u , S7 <- s = paletteColor $ xterm6LevelRGB 5 5 4
+            symbol = head $ show e
+            s = gel f e
+            selected = e == ε st
 
-      -- Atomic
+   -- | Map rendering
 
-      | Atomic      <- l               , S0 <- s = paletteColor $ xterm6LevelRGB 0 1 0
-      | Atomic      <- l               , S1 <- s = paletteColor $ xterm6LevelRGB 0 1 1
-      | Atomic      <- l               , S2 <- s = paletteColor $ xterm6LevelRGB 1 1 2
-      | Atomic      <- l               , S3 <- s = paletteColor $ xterm6LevelRGB 2 1 3
-      | Atomic      <- l               , S4 <- s = paletteColor $ xterm6LevelRGB 3 1 4
-      | Atomic      <- l               , S5 <- s = paletteColor $ xterm6LevelRGB 4 2 5
-      | Atomic      <- l               , S6 <- s = paletteColor $ xterm6LevelRGB 5 3 5
-      | Atomic      <- l               , S7 <- s = paletteColor $ xterm6LevelRGB 5 4 5
+   pixel :: (Int,Int) -> Draw
+   pixel (x,y) = c %.< cell chr # clr
+      where
 
-      | otherwise                                = greyed
+      -- get index of node taking scroll into account
+      n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
+         where
+         (mx,my) = indexToCoord (κ st)
+
+      -- stretch, tilt, margin, translate to library coordinate system (1-based (y,x))
+      c = join bimap succ (y + radius + marginY , 2 * (x + radius + marginX) + y)
+
+      selected :: Bool = n == fi
+      adjacent :: Bool = n ∈ fis
+      targeted :: Bool = n ∈ τ st
+
+      chr
+         |                    Void   <- u = ' '
+         | Elemental   <- l               = intToDigit $ fromEnum s
+         | Superficial <- l , Plasma <- u = "·-~+=≠cs" !! fromEnum s
+         | Superficial <- l , Flame  <- u = "#'\"\"^^xx" !! fromEnum s
+      -- |                         _ <- u = 'x'
+      -- |                         _ <- u = '+'
+      -- |                         _ <- u = ':'
+      -- |                         _ <- u = '>'
+      -- |                         _ <- u = '<'
+      -- |                         _ <- u = ".',\":;*^" !! fromEnum s
+      -- |                         _ <- u = "░▒▓█░▒▓█" !! fromEnum s
+         | otherwise                      = '?'
+
+      clr :: Draw
+         | Menu <- μ st                   = color Black Vivid
+         | selected      , targeted       = color Red Dull
+         | adjacent      , targeted       = color Red Dull
+         |                 targeted       = color Red Dull
+         | selected      , Elemental <- l = elementColor e
+         | selected                       = color Cyan Dull
+         | adjacent      , Elemental <- l = elementColor e
+         | adjacent                       = color Cyan Vivid
+         | Pause <- μ st                  = greyed
+         | Atom {} <- a                   = stone
+         | otherwise                      = color White Dull
+
+      greyed :: Draw = paletteColor (xterm24LevelGray $ max 3 $ fromEnum s + 2 * fromEnum s)
+
+      stone :: Draw
+         |                    Void   <- u           = paletteColor $ xterm6LevelRGB 0 0 0
+
+         -- Units
+
+         | Superficial <- l , Plasma <- u , L0 <- s = paletteColor $ xterm6LevelRGB 0 1 0
+         | Superficial <- l , Plasma <- u , L1 <- s = paletteColor $ xterm6LevelRGB 0 1 1
+         | Superficial <- l , Plasma <- u , L2 <- s = paletteColor $ xterm6LevelRGB 1 1 2
+         | Superficial <- l , Plasma <- u , L3 <- s = paletteColor $ xterm6LevelRGB 2 1 3
+         | Superficial <- l , Plasma <- u , L4 <- s = paletteColor $ xterm6LevelRGB 3 1 4
+         | Superficial <- l , Plasma <- u , L5 <- s = paletteColor $ xterm6LevelRGB 4 2 5
+         | Superficial <- l , Plasma <- u , L6 <- s = paletteColor $ xterm6LevelRGB 5 3 5
+         | Superficial <- l , Plasma <- u , L7 <- s = paletteColor $ xterm6LevelRGB 5 4 5
+
+         | Superficial <- l , Flame  <- u , L0 <- s = paletteColor $ xterm6LevelRGB 0 0 1  -- orange
+         | Superficial <- l , Flame  <- u , L1 <- s = paletteColor $ xterm6LevelRGB 1 0 1  -- red
+         | Superficial <- l , Flame  <- u , L2 <- s = paletteColor $ xterm6LevelRGB 2 1 1  -- ...
+         | Superficial <- l , Flame  <- u , L3 <- s = paletteColor $ xterm6LevelRGB 3 2 1
+         | Superficial <- l , Flame  <- u , L4 <- s = paletteColor $ xterm6LevelRGB 4 3 1
+         | Superficial <- l , Flame  <- u , L5 <- s = paletteColor $ xterm6LevelRGB 5 4 2
+         | Superficial <- l , Flame  <- u , L6 <- s = paletteColor $ xterm6LevelRGB 5 5 3
+         | Superficial <- l , Flame  <- u , L7 <- s = paletteColor $ xterm6LevelRGB 5 5 4
+
+         -- Atomic
+
+         | Atomic      <- l               , L0 <- s = paletteColor $ xterm6LevelRGB 0 1 0
+         | Atomic      <- l               , L1 <- s = paletteColor $ xterm6LevelRGB 0 1 1
+         | Atomic      <- l               , L2 <- s = paletteColor $ xterm6LevelRGB 1 1 2
+         | Atomic      <- l               , L3 <- s = paletteColor $ xterm6LevelRGB 2 1 3
+         | Atomic      <- l               , L4 <- s = paletteColor $ xterm6LevelRGB 3 1 4
+         | Atomic      <- l               , L5 <- s = paletteColor $ xterm6LevelRGB 4 2 5
+         | Atomic      <- l               , L6 <- s = paletteColor $ xterm6LevelRGB 5 3 5
+         | Atomic      <- l               , L7 <- s = paletteColor $ xterm6LevelRGB 5 4 5
+
+         | otherwise                                = greyed
 
