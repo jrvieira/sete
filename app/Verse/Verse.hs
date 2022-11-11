@@ -40,7 +40,7 @@ import Control.Arrow
 -- level
 
 data Level = L0 | L1 | L2 | L3 | L4 | L5 | L6 | L7
-   deriving ( Eq, Enum, Bounded )
+   deriving ( Eq, Enum, Ord, Bounded )
 
 instance Num Level where
    a + b = toEnum $ min (fromEnum (maxBound :: Level)) (fromEnum a + fromEnum b)
@@ -73,11 +73,6 @@ data Layer = Superficial | Elemental | Schematic
 
 data Mode = Play | Pause | Menu
 
--- simulations
-
-data Sim = Smoke | Terra | Id | Noise | Bees | Fish | Fish2 | Glide | Glide2 | Ripple | Rippl2 | Nil
-   deriving ( Show, Eq, Enum, Bounded )
-
 -- state
 
 data State = State {
@@ -85,7 +80,6 @@ data State = State {
    λ :: Layer ,
    ε :: Element ,
    ο :: Unit ,
-   σ :: Sim ,
    ρ :: [Level] ,  -- randoms
    ι :: Char ,  -- last input
    φ :: Int ,  -- focused atom
@@ -99,7 +93,6 @@ state = State {
    λ = Superficial ,
    ε = minBound ,
    ο = minBound ,
-   σ = Terra ,
    ρ = [] ,
    ι = ' ' ,
    φ = 0 ,
@@ -116,9 +109,8 @@ atom u = Atom { υ = u , ες = Map.fromList $ zip total $ repeat minBound }
 
 -- verse
 
-type Node = (Atom,Map Dir Int)
-
 type Verse = IntMap Node
+type Node = (Atom,Map Dir Int)
 
 verse :: [Atom] -> Verse
 verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void))

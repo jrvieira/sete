@@ -15,26 +15,27 @@ main :: IO ()
 main = do
    r <- randomRs (minBound,maxBound) <$> initStdGen
    playGame $ Game {
-      gTPS = 16 ,
+      gTPS = 19 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = logic ,
       gDrawFunction = draw ,
       gQuitFunction = quit }
 
+-- | Quit condition
+
+quit :: State -> Bool
+quit = const False
+
 -- | Render the universe
 
 draw :: GEnv -> State -> Plane
 draw _ = foldl (&) canvas . art
-
    where
 
    canvas :: Plane
    canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
 
-   hexagon :: _
-   hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
-
--- | One tick in the simulation
+-- | One tick
 
 step :: State -> State
 step st
@@ -46,32 +47,32 @@ step st
 logic :: GEnv -> State -> Event -> State
 logic _ st Tick = step st
 logic _ st (KeyPress k) = st' { ι = k }
-
    where
 
    st'
       -- randomise
 
-      | 'r' <- k                       = let (r,r') = splitAt (size (ν st)) r in st { ν = foldr ($) (ν st) $ zipWith (nup (ε st) . const) r [0..] , ρ = r' }
+      | 'r' <- k                       = let (r,r') = splitAt (size (ν st)) (ρ st) in st { ν = foldr ($) (ν st) $ zipWith (nup (ε st) . const) r [0..] , ρ = r' }
+   -- | 'R' <- k                       = let (r,r') = splitAt (size (ν st)) (ρ st) in st { ν = ν st , ρ = r' }  -- all layers at once
 
       -- step
 
       | 'P' <- k                       = (step st { μ = Play }) { μ = Pause }
 
-      -- simulations menu
+--    -- simulations menu
 
-      | 'h' <- k , Menu  <- μ st       = st { σ = back (σ st) }
-      | 'j' <- k , Menu  <- μ st       = st { σ = back (σ st) }
-      | 'k' <- k , Menu  <- μ st       = st { σ = forw (σ st) }
-      | 'l' <- k , Menu  <- μ st       = st { σ = forw (σ st) }
-      | 'p' <- k , Menu  <- μ st       = st { μ = Play }
-      | '\n'<- k , Menu  <- μ st       = st { μ = Pause }  -- close menu
-      | 'S' <- k , Menu  <- μ st       = st { μ = Pause }  -- close menu
-      |  _  <- k , Menu  <- μ st       = st  -- block other input while in menu
+--    | 'h' <- k , Menu  <- μ st       = st { σ = back (σ st) }
+--    | 'j' <- k , Menu  <- μ st       = st { σ = back (σ st) }
+--    | 'k' <- k , Menu  <- μ st       = st { σ = forw (σ st) }
+--    | 'l' <- k , Menu  <- μ st       = st { σ = forw (σ st) }
+--    | 'p' <- k , Menu  <- μ st       = st { μ = Play }
+--    | '\n'<- k , Menu  <- μ st       = st { μ = Pause }  -- close menu
+--    | 'S' <- k , Menu  <- μ st       = st { μ = Pause }  -- close menu
+--    |  _  <- k , Menu  <- μ st       = st  -- block other input while in menu
 
-      -- open menu
+--    -- open menu
 
-      | 's' <- k                       = st { μ = Menu }
+--    | 's' <- k                       = st { μ = Menu }
 
       -- pause
 
@@ -134,25 +135,21 @@ logic _ st (KeyPress k) = st' { ι = k }
 
       | 'v' <- k                       = st { λ = forw (λ st) }
       | 'V' <- k                       = st { λ = back (λ st) }
-      | '<' <- k                       = st { λ = forw (λ st) }
-      | '>' <- k                       = st { λ = back (λ st) }
+      | '>' <- k                       = st { λ = forw (λ st) }
+      | '<' <- k                       = st { λ = back (λ st) }
       | ' ' <- k                       = st { λ = Superficial }
       | 'e' <- k                       = st { λ = Elemental }
       | 'x' <- k                       = st { λ = Schematic }
 
       -- change sublayer
 
-      | '.' <- k , Superficial <- λ st = st { ο = back (ο st) }
-      | ',' <- k , Superficial <- λ st = st { ο = forw (ο st) }
+      | ',' <- k , Superficial <- λ st = st { ο = back (ο st) }
+      | '.' <- k , Superficial <- λ st = st { ο = forw (ο st) }
 
-      | '.' <- k , Elemental   <- λ st = st { ε = back (ε st) }
-      | ',' <- k , Elemental   <- λ st = st { ε = forw (ε st) }
+      | ',' <- k , Elemental   <- λ st = st { ε = back (ε st) }
+      | '.' <- k , Elemental   <- λ st = st { ε = forw (ε st) }
 
       -- nothing
 
       | otherwise                      = st
 
--- | Quit condition
-
-quit :: State -> Bool
-quit = const False

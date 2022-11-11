@@ -2,69 +2,83 @@ module Verse.Sim where
 
 import Zero.Zero
 import Verse.Verse
+import Data.IntMap qualified as IntMap ( (!) )
+import Data.Map.Strict qualified as Map ( (!), mapWithKey, elems )
 import Data.Foldable ( toList )
 
-sim :: State -> Node -> Node
-sim st n@(a,ns)
-   | True        = n
-   | Terra  <- s = terra
-   | Noise  <- s = noise
-   | Smoke  <- s = smoke
-   | Bees   <- s = bees
-   | Fish   <- s = gene [    2        ] [    2        ] 3
-   | Fish2  <- s = gene [    2,  4    ] [    2,  4    ] 3
-   | Glide  <- s = gene [    2,  4,5,6] [    2,3,4,5,6] 4
-   | Glide2 <- s = gene [  1,  3,4    ] [    2,3,4,5  ] 5
-   | Ripple <- s = gene [  1          ] [  1,2,3,4,5,6] 7
-   | Rippl2 <- s = gene [  1,2,  4,5,6] [    2,3,4    ] 7
-   | otherwise   = n
+-- | A step in simulation
 
+sim :: State -> Node -> Node
+sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
    where
 
-   s = σ st
-
--- -- get value from this node
--- s :: Level
-
--- -- set this node's value
--- up :: (Level -> Level) -> Node
-
--- -- get value from other node in verse
--- si :: Int -> Level
-
-
-   gene :: [Int] -> [Int] -> Int -> Node
-   gene survive born i
-      | length (filter (== maxBound) nvs) ∈ survive , s > toEnum (i-2) = up (const maxBound)
-      | length (filter (== maxBound) nvs) ∈ born , s < succ minBound = up (const maxBound)
-      | s <= toEnum (i - 2) = up prev
-      | otherwise = up (const $ toEnum (i-2))
+   el :: Element -> Level -> Level
+   el e
+      | Air   <- e = smoke
+      | Water <- e = rippl'
+      | Fire  <- e = bees
+      | Earth <- e = terra
+      | otherwise  = noise
       where
-      nvs = toList $ si <$> ns
 
-   terra :: Node
-      | leq > 2 = n
-      | lgt < llt = up prev
-      | otherwise = up next
-      where
-      leq = length $ filter (== s) nvs
-      lgt = length $ filter (>  s) nvs
-      llt = length $ filter (<  s) nvs
-      nvs = toList $ si <$> ns
+      -- | Get atomic level by index
 
-   smoke :: Node
-      | length (filter (== minimum nvs) nvs) <= (fromEnum s - fromEnum (minimum nvs)) = up prev
-      | sum (fromEnum <$> filter (> s) nvs) > 6 = up next
-      | otherwise = n
-      where
-      nvs = toList $ si <$> ns
+      lev :: Int -> Level
+      lev i = es Map.! e
+         where
+         (Atom _ es,_) = ν st IntMap.! i
 
-   bees :: Node
-      | length (filter (> s) nvs) ∈ [2] = up next
-      | length (filter (> s) nvs) ∈ [2] = n
-      | otherwise = sup prev n
-      where
-      nvs = toList $ si <$> ns
+      -- | Automata
 
-   noise :: Node = up (const $ ρ st !! sal n)
+      gene :: [Int] -> [Int] -> Int -> Level -> Level
+      gene survive born n l
+         | length (filter (== maxBound) nvs) ∈ survive , fromEnum l > n-2 = maxBound
+         | length (filter (== maxBound) nvs) ∈ born , l < succ minBound = maxBound
+         | l <= toEnum (n - 2) = prev l
+         | otherwise = toEnum (n-2)
+         where
+         nvs = toList $ lev <$> ns
+
+      fish   = gene [    2        ] [    2        ] 3
+      fish'  = gene [    2,  4    ] [    2,  4    ] 3
+      glide  = gene [    2,  4,5,6] [    2,3,4,5,6] 4
+      glide' = gene [  1,  3,4    ] [    2,3,4,5  ] 5
+      ripple = gene [  1          ] [  1,2,3,4,5,6] 7
+      rippl' = gene [  1,2,  4,5,6] [    2,3,4    ] 7
+
+      terra :: Level -> Level
+      terra l
+         | leq > 2 = l
+         | lgt < llt = prev l
+         | otherwise = next l
+         where
+         leq = length $ filter (== l) nvs
+         lgt = length $ filter (>  l) nvs
+         llt = length $ filter (<  l) nvs
+         nvs = toList $ lev <$> ns
+
+      smoke :: Level -> Level
+      smoke l
+         | length (filter (== minimum nvs) nvs) <= (fromEnum l - fromEnum (minimum nvs)) = prev l
+         | sum (fromEnum <$> filter (> l) nvs) > 6 = next l
+         | otherwise = l
+         where
+         nvs = toList $ lev <$> ns
+
+      bees :: Level -> Level
+      bees l
+         | length (filter (> l) nvs) ∈ [2] = next l
+         | length (filter (> l) nvs) ∈ [2] = l
+         | otherwise = prev l
+         where
+         nvs = toList $ lev <$> ns
+
+      -- get the (sum ns) index of ρ for a pseudorandom level
+      noise :: Level -> Level
+      noise _ = toEnum $ mod (sum $ fromEnum . lev <$> ns) (fromEnum (maxBound :: Level))
+
+   -- | Update surface object, depending on current state and Atom properties
+
+   ob :: Node -> Node
+   ob = id
 
