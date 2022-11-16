@@ -100,17 +100,15 @@ state = State {
    κ = 0 ,
    μ = Pause }
 
--- atoms
+-- verse
+
+type Verse = IntMap Node
+type Node = (Atom,Map Dir Int)
 
 data Atom = Atom { υ :: Unit , ες :: Map Element Level }
 
 atom :: Unit -> Atom
 atom u = Atom { υ = u , ες = Map.fromList $ zip total $ repeat minBound }
-
--- verse
-
-type Verse = IntMap Node
-type Node = (Atom,Map Dir Int)
 
 verse :: [Atom] -> Verse
 verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void))
@@ -125,6 +123,9 @@ up e f (a,ns) = (a { ες = Map.adjust f e (ες a) } , ns)
 
 nup :: Element -> (Level -> Level) -> Int -> Verse -> Verse
 nup e f i = IntMap.adjust (up e f) i
+
+nap :: Element -> [Level] -> Verse -> Verse
+nap e l v = foldr ($) v $ zipWith (nup e . const) l [0..]
 
 -- coord
 

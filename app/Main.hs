@@ -10,6 +10,7 @@ import Zero.Zero
 import Terminal.Game
 import System.Random ( randomRs, initStdGen )
 import Data.IntSet qualified as IntSet ( empty, member, insert, delete )
+import Data.IntMap qualified as IntMap ( keys )
 
 main :: IO ()
 main = do
@@ -52,8 +53,8 @@ logic _ st (KeyPress k) = st' { ι = k }
    st'
       -- randomise
 
-      | 'r' <- k                       = let (r,r') = splitAt (size (ν st)) (ρ st) in st { ν = foldr ($) (ν st) $ zipWith (nup (ε st) . const) r [0..] , ρ = r' }
-   -- | 'R' <- k                       = let (r,r') = splitAt (size (ν st)) (ρ st) in st { ν = ν st , ρ = r' }  -- all layers at once
+      | 'r' <- k                       = let (r,r') = splitAt (size (ν st)) (ρ st) in st { ν = nap (ε st) r (ν st) , ρ = r' }
+      | 'R' <- k                       = let (rs,r') = packs (replicate (length (total :: [Level])) (size (ν st))) (ρ st) in st { ν = foldr ($) (ν st) (zipWith nap total rs) , ρ = r' }
 
       -- step
 
@@ -128,8 +129,9 @@ logic _ st (KeyPress k) = st' { ι = k }
       | '6' <- k                       = st { ν = nup (ε st) (const 6) (φ st) (ν st) }
       | '7' <- k                       = st { ν = nup (ε st) (const 7) (φ st) (ν st) }
       | '=' <- k                       = st { ν = nup (ε st) next (φ st) (ν st) }
-      | '+' <- k                       = st { ν = nup (ε st) next (φ st) (ν st) }
       | '-' <- k                       = st { ν = nup (ε st) prev (φ st) (ν st) }
+      | '+' <- k                       = st { ν = foldr ($) (ν st) $ nup (ε st) next <$> IntMap.keys (ν st) }
+      | '_' <- k                       = st { ν = foldr ($) (ν st) $ nup (ε st) prev <$> IntMap.keys (ν st) }
 
       -- change layer
 
