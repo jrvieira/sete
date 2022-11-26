@@ -56,13 +56,34 @@ instance Random Level where
 
 -- elements
 
-data Element = Air | Water | Fire | Earth | Aether  -- air, water, fire, earth, aether
+data Element = Ar | Agua | Fogo | Terra | Eter -- air, water, fire, earth, aether
    deriving ( Eq, Enum, Bounded, Show, Ord )
 
 -- units
 
-data Unit = Void | Light | Plant | Cat | Flame | Plasma | Computer | Pipe | Wire
-   deriving ( Eq, Enum, Bounded, Show, Ord )
+-- data Status = Dead | Broken | Off | On
+--    deriving ( Eq, Show )
+--
+-- data Unit = Void | Unit { εη :: Entity , στ :: Status }
+--    deriving ( Eq, Show )
+
+data Unit = Void
+   | Well
+   | Light
+   | Plant
+   | Cat
+   | Flame
+   | Plasma
+   | Computer
+   | Pipe
+   | Pump
+   | Wire
+   | Box
+   | Wall
+   | Sand
+   | Glass
+   | Water
+   deriving ( Eq, Enum, Bounded, Show )
 
 -- ui layers
 
@@ -89,10 +110,10 @@ data State = State {
 
 state :: State
 state = State {
-   ν = verse $ repeat $ atom Plasma ,
+   ν = verse $ repeat $ atom Void ,
    λ = Superficial ,
    ε = minBound ,
-   ο = minBound ,
+   ο = Void ,
    ρ = [] ,
    ι = ' ' ,
    φ = 0 ,
@@ -130,7 +151,7 @@ nap e l v = foldr ($) v $ zipWith (nup e . const) l [0..]
 -- coord
 
 distance :: Int -> Int -> Float
-distance a b = undefined
+distance _ _ = undefined
 
 coordToIndex :: (Int,Int) -> Int
 coordToIndex (x,y) = y * width + x

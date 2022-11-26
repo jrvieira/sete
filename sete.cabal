@@ -7,7 +7,7 @@ maintainer: github@jrvieira.com
 
 extra-source-files: CHANGELOG.md
 
-executable seis
+executable sete
    main-is: Main.hs
    ghc-options: -O2 -threaded -rtsopts -Wall
 
@@ -16,6 +16,7 @@ executable seis
       , Zero.Color
       , Verse.Conf
       , Verse.Verse
+      , Verse.Unit
       , Verse.Sim
       , Verse.Art
    -- LANGUAGE extensions used by modules in this package.
@@ -40,7 +41,7 @@ executable seis
       , ScopedTypeVariables
       , BinaryLiterals
    -- , GeneralizedNewtypeDeriving
-   -- , LexicalNegation
+      , LexicalNegation
    -- , OverloadedLists
    -- , OverloadedStrings
       , TypeApplications

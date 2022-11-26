@@ -1,8 +1,9 @@
 module Verse.Art where
 
 import Zero.Zero hiding ( (#) )
-import Verse.Verse
 import Verse.Conf
+import Verse.Verse
+import Verse.Unit
 import Terminal.Game  -- remove
 import Data.Char ( intToDigit )
 import Data.List ( intersperse )
@@ -16,13 +17,13 @@ import Control.Monad ( join )
 
 elementColor :: Element -> Draw
 elementColor e
-   | Air    <- e = color White Dull
-   | Water  <- e = color Blue Dull
-   | Fire   <- e = color Red Dull
-   | Earth  <- e = color Green Dull
-   | Aether <- e = color Magenta Dull
--- |        <- e = color Cyan Dull  -- reserved for ui (focus)
--- |        <- e = color Yellow Dull  -- reserved for ui (info)
+   | Ar    <- e = color White Dull
+   | Agua  <- e = color Blue Dull
+   | Fogo  <- e = color Red Dull
+   | Terra <- e = color Green Dull
+   | Eter  <- e = color Magenta Dull
+-- |       <- e = color Cyan Dull  -- reserved for ui (focus)
+-- |       <- e = color Yellow Dull  -- reserved for ui (info)
 
 -- | Graphic
 
@@ -57,7 +58,7 @@ art st = map pixel hexagon <> ui
       adjacent :: Bool = n ∈ fis
       targeted :: Bool = IntSet.member n (τ st)
 
-      chr
+      chr :: Char
          |                       Void   <- υ a = ' '
          | Elemental   <- λ st                 = intToDigit $ fromEnum l
          | Superficial <- λ st , Plasma <- υ a = "·-~+=≠cs" !! fromEnum l
@@ -87,7 +88,7 @@ art st = map pixel hexagon <> ui
          | Pause <- μ st                = greyed
          | Atom {} <- a                 = stone
 
-         | otherwise                    = color White Dull
+      -- | otherwise                    = color White Dull
 
       greyed :: Draw
       greyed = paletteColor (xterm24LevelGray $ max 3 $ fromEnum l + 2 * fromEnum l)
@@ -130,8 +131,6 @@ art st = map pixel hexagon <> ui
       layer = word (show (λ st)) # k (color White Dull)
       stat = word (show $ fromEnum $ sum $ map (sum . Map.elems . ες . fst) $ IntMap.elems $ ν st) # k (color Yellow Dull)
       invi = word (show $ ι st) # k (color Magenta Dull)
-
-
 
       -- inactive color
       k :: Draw -> Draw

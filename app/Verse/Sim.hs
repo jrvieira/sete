@@ -3,7 +3,7 @@ module Verse.Sim where
 import Zero.Zero
 import Verse.Verse
 import Data.IntMap qualified as IntMap ( (!) )
-import Data.Map.Strict qualified as Map ( (!), mapWithKey, elems )
+import Data.Map.Strict qualified as Map ( (!), mapWithKey )
 import Data.Foldable ( toList )
 
 -- | A step in simulation
@@ -14,10 +14,10 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
 
    el :: Element -> Level -> Level
    el e
-      | Air   <- e = smoke
-      | Water <- e = rippl'
-      | Fire  <- e = bees
-      | Earth <- e = terra
+      | Ar    <- e = smoke
+      | Agua  <- e = rippl'
+      | Fogo  <- e = bees
+      | Terra <- e = terra
       | otherwise  = noise
       where
 
@@ -39,11 +39,11 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
          where
          nvs = toList $ lev <$> ns
 
-      fish   = gene [    2        ] [    2        ] 3
-      fish'  = gene [    2,  4    ] [    2,  4    ] 3
-      glide  = gene [    2,  4,5,6] [    2,3,4,5,6] 4
-      glide' = gene [  1,  3,4    ] [    2,3,4,5  ] 5
-      ripple = gene [  1          ] [  1,2,3,4,5,6] 7
+   -- fish   = gene [    2        ] [    2        ] 3
+   -- fish'  = gene [    2,  4    ] [    2,  4    ] 3
+   -- glide  = gene [    2,  4,5,6] [    2,3,4,5,6] 4
+   -- glide' = gene [  1,  3,4    ] [    2,3,4,5  ] 5
+   -- ripple = gene [  1          ] [  1,2,3,4,5,6] 7
       rippl' = gene [  1,2,  4,5,6] [    2,3,4    ] 7
 
       terra :: Level -> Level
