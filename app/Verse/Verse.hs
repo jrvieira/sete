@@ -68,21 +68,22 @@ data Element = Ar | Agua | Fogo | Terra | Eter -- air, water, fire, earth, aethe
 --    deriving ( Eq, Show )
 
 data Unit = Void
-   | Well
-   | Light
-   | Plant
-   | Cat
+   | Battery
+   | Wire
+-- | Well
+   | Lamp
+-- | Plant
+-- | Cat
    | Flame
    | Plasma
-   | Computer
-   | Pipe
-   | Pump
-   | Wire
-   | Box
-   | Wall
-   | Sand
-   | Glass
-   | Water
+-- | Computer
+-- | Pipe
+-- | Pump
+-- | Box
+-- | Wall
+-- | Sand
+-- | Glass
+-- | Water
    deriving ( Eq, Enum, Bounded, Show )
 
 -- ui layers
@@ -147,6 +148,11 @@ nup e f i = IntMap.adjust (up e f) i
 
 nap :: Element -> [Level] -> Verse -> Verse
 nap e l v = foldr ($) v $ zipWith (nup e . const) l [0..]
+
+qup :: Unit -> Int -> Verse -> Verse
+qup u i = IntMap.adjust q i
+   where
+   q (a,ns) = (a { υ = u } , ns)
 
 -- coord
 

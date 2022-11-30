@@ -32,7 +32,6 @@ quit = const False
 draw :: GEnv -> State -> Plane
 draw _ = foldl (&) canvas . art
    where
-
    canvas :: Plane
    canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
 
@@ -150,6 +149,11 @@ logic _ st (KeyPress k) = st' { ι = k }
 
       | ',' <- k , Elemental   <- λ st = st { ε = back (ε st) }
       | '.' <- k , Elemental   <- λ st = st { ε = forw (ε st) }
+
+      -- place unit
+
+      | 'q' <- k , Superficial <- λ st = st { ν = qup (ο st) (φ st) (ν st) }
+      | 'Q' <- k , Superficial <- λ st = st { ν = foldr ($) (ν st) $ qup (ο st) <$> IntMap.keys (ν st) }
 
       -- nothing
 

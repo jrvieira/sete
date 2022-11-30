@@ -1,6 +1,6 @@
 module Verse.Unit where
 
--- import Verse.Verse
+import Verse.Verse
 -- import Data.Map
 
 -- | Elemental traits of units
@@ -19,32 +19,32 @@ module Verse.Unit where
 
 -}
 
--- type Property = Element -> Unit -> Level
---
--- -- unit creates element up to L
--- -- : productive, +
--- inductivity :: Property
--- inductivity Fogo u
+type Property = Element -> Unit -> Level -> Level
+
+-- -- unit creates element up to L : productive, amplifier, +
+-- inductive :: Property
+-- inductive Fogo u
 --    | Flame <- u = maxBound
--- inductivity _ _ = minBound
---
--- -- unit consumes element up to L
--- -- : absorvent, -
--- abductivity :: Property
--- abductivity Fogo
+-- inductive _ _ = minBound
+
+-- unit allows element up to L : permeable, non blocking, =
+
+conductivity :: Property
+conductivity Eter u
+   | Battery <- u = const maxBound
+   | Wire    <- u = id
+   | Lamp    <- u = (- 2)
+conductivity Ar u
+   | Void    <- u = id
+conductivity _ _  = const minBound
+
+-- -- unit consumes element up to L : absorvent, resistive, -
+-- abductive :: Property
+-- abductive Fogo
 --    | Water <- u = maxBound
--- abductivity Agua
+-- abductive Agua
 --    | Flame <- u = maxBound
--- abductivity _ _ = minBound
---
--- -- unit allows element up to L
--- -- : permeable, non blocking, =
--- conductivity :: Property
--- conductivity Ar u
---    | Void  <- u = maxBound
---    | Wall  <- u = minBound
---    | Wall  <- u = minBound
--- conductivity _ _ = minBound
+-- abductive _ _ = minBound
 --
 -- type Category = Unit -> Bool
 --

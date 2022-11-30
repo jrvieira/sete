@@ -44,7 +44,7 @@ art st = map pixel hexagon <> ui
       where
 
       (a,_) = ν st IntMap.! n
-      l = ες a Map.! ε st
+      l e = ες a Map.! e
 
       -- get index of node taking scroll into account
       n = move mx L . move my I $ coordToIndex (mod (x - div y height * radius) width , mod y height)
@@ -59,64 +59,72 @@ art st = map pixel hexagon <> ui
       targeted :: Bool = IntSet.member n (τ st)
 
       chr :: Char
-         |                       Void   <- υ a = ' '
-         | Elemental   <- λ st                 = intToDigit $ fromEnum l
-         | Superficial <- λ st , Plasma <- υ a = "·-~+=≠cs" !! fromEnum l
-         | Superficial <- λ st , Flame  <- υ a = "#'\"\"^^xx" !! fromEnum l
-      -- |                            _ <- υ a = 'x'
-      -- |                            _ <- υ a = '+'
-      -- |                            _ <- υ a = ':'
-      -- |                            _ <- υ a = '>'
-      -- |                            _ <- υ a = '<'
-      -- |                            _ <- υ a = ".',\":;*^" !! fromEnum l
-      -- |                            _ <- υ a = "░▒▓█░▒▓█" !! fromEnum l
-         | otherwise                           = '?'
+         | Elemental <- λ st , selected = intToDigit $ fromEnum (l (ε st))
+
+         | Void    <- υ a = '.'
+         | Plasma  <- υ a = "·-~+=≠cs" !! fromEnum (ες a Map.! Eter)
+         | Flame   <- υ a = "#'\"\"^^xx" !! fromEnum (ες a Map.! Fogo)
+         | Wire    <- υ a = '*'
+         | Battery <- υ a = 'E'
+      -- | _       <- υ a = 'x'
+      -- | _       <- υ a = '+'
+      -- | _       <- υ a = ':'
+      -- | _       <- υ a = '>'
+      -- | _       <- υ a = '<'
+      -- | _       <- υ a = ".',\":;*^" !! fromEnum (l (ε st))
+      -- | _       <- υ a = "░▒▓█░▒▓█" !! fromEnum (l (ε st))
+         | otherwise      = '?'
 
       clr :: Draw
 
-         | Menu <- μ st                 = color Black Vivid
+         | Menu <- μ st                      = color Black Vivid
 
-         | selected , targeted          = color Red Dull
-         | adjacent , targeted          = color Red Dull
-         |            targeted          = color Red Dull
+         | selected , targeted               = color Red Dull
+         | adjacent , targeted               = color Red Dull
+         |            targeted               = color Red Dull
 
-         | selected , Elemental <- λ st = elementColor (ε st)
-         | selected                     = color Cyan Dull
-         | adjacent , Elemental <- λ st = elementColor (ε st)
-         | adjacent                     = color Cyan Vivid
+         | selected , Elemental <- λ st      = elementColor (ε st)
+         | selected                          = color Cyan Dull
+         | adjacent , Elemental <- λ st      = elementColor (ε st)
+         | adjacent                          = color Cyan Vivid
 
-         | Pause <- μ st                = greyed
-         | Atom {} <- a                 = stone
+         | Pause <- μ st , Elemental <- λ st = greyed (ε st)
+         | Pause <- μ st                     = color Black Vivid
+         | Atom {} <- a                      = stone
 
-      -- | otherwise                    = color White Dull
+      -- | otherwise                         = color White Dull
 
-      greyed :: Draw
-      greyed = paletteColor (xterm24LevelGray $ max 3 $ fromEnum l + 2 * fromEnum l)
+      greyed :: Element -> Draw
+      greyed e = paletteColor (xterm24LevelGray $ max 3 $ fromEnum (l e) + 2 * fromEnum (l e))
 
       stone :: Draw
-         |                       Void   <- υ a           = paletteColor $ xterm6LevelRGB 0 0 0
+         |                       Void    <- υ a                = paletteColor $ xterm6LevelRGB 0 0 0
+
+         -- Elemental
+
+         | Elemental   <- λ st                                 = greyed (ε st)
 
          -- Units
 
-         | Superficial <- λ st , Plasma <- υ a , L0 <- l = paletteColor $ xterm6LevelRGB 0 1 0
-         | Superficial <- λ st , Plasma <- υ a , L1 <- l = paletteColor $ xterm6LevelRGB 0 1 1
-         | Superficial <- λ st , Plasma <- υ a , L2 <- l = paletteColor $ xterm6LevelRGB 1 1 2
-         | Superficial <- λ st , Plasma <- υ a , L3 <- l = paletteColor $ xterm6LevelRGB 2 1 3
-         | Superficial <- λ st , Plasma <- υ a , L4 <- l = paletteColor $ xterm6LevelRGB 3 1 4
-         | Superficial <- λ st , Plasma <- υ a , L5 <- l = paletteColor $ xterm6LevelRGB 4 2 5
-         | Superficial <- λ st , Plasma <- υ a , L6 <- l = paletteColor $ xterm6LevelRGB 5 3 5
-         | Superficial <- λ st , Plasma <- υ a , L7 <- l = paletteColor $ xterm6LevelRGB 5 4 5
+         | Superficial <- λ st , Plasma <- υ a  , L0 <- l Eter = paletteColor $ xterm6LevelRGB 0 1 0
+         | Superficial <- λ st , Plasma <- υ a  , L1 <- l Eter = paletteColor $ xterm6LevelRGB 0 1 1
+         | Superficial <- λ st , Plasma <- υ a  , L2 <- l Eter = paletteColor $ xterm6LevelRGB 1 1 2
+         | Superficial <- λ st , Plasma <- υ a  , L3 <- l Eter = paletteColor $ xterm6LevelRGB 2 1 3
+         | Superficial <- λ st , Plasma <- υ a  , L4 <- l Eter = paletteColor $ xterm6LevelRGB 3 1 4
+         | Superficial <- λ st , Plasma <- υ a  , L5 <- l Eter = paletteColor $ xterm6LevelRGB 4 2 5
+         | Superficial <- λ st , Plasma <- υ a  , L6 <- l Eter = paletteColor $ xterm6LevelRGB 5 3 5
+         | Superficial <- λ st , Plasma <- υ a  , L7 <- l Eter = paletteColor $ xterm6LevelRGB 5 4 5
 
-         | Superficial <- λ st , Flame  <- υ a , L0 <- l = paletteColor $ xterm6LevelRGB 0 0 1  -- orange
-         | Superficial <- λ st , Flame  <- υ a , L1 <- l = paletteColor $ xterm6LevelRGB 1 0 1  -- red
-         | Superficial <- λ st , Flame  <- υ a , L2 <- l = paletteColor $ xterm6LevelRGB 2 1 1  -- ...
-         | Superficial <- λ st , Flame  <- υ a , L3 <- l = paletteColor $ xterm6LevelRGB 3 2 1
-         | Superficial <- λ st , Flame  <- υ a , L4 <- l = paletteColor $ xterm6LevelRGB 4 3 1
-         | Superficial <- λ st , Flame  <- υ a , L5 <- l = paletteColor $ xterm6LevelRGB 5 4 2
-         | Superficial <- λ st , Flame  <- υ a , L6 <- l = paletteColor $ xterm6LevelRGB 5 5 3
-         | Superficial <- λ st , Flame  <- υ a , L7 <- l = paletteColor $ xterm6LevelRGB 5 5 4
+         | Superficial <- λ st , Flame  <- υ a  , L0 <- l Fogo = paletteColor $ xterm6LevelRGB 0 0 1  -- orange
+         | Superficial <- λ st , Flame  <- υ a  , L1 <- l Fogo = paletteColor $ xterm6LevelRGB 1 0 1  -- red
+         | Superficial <- λ st , Flame  <- υ a  , L2 <- l Fogo = paletteColor $ xterm6LevelRGB 2 1 1  -- ...
+         | Superficial <- λ st , Flame  <- υ a  , L3 <- l Fogo = paletteColor $ xterm6LevelRGB 3 2 1
+         | Superficial <- λ st , Flame  <- υ a  , L4 <- l Fogo = paletteColor $ xterm6LevelRGB 4 3 1
+         | Superficial <- λ st , Flame  <- υ a  , L5 <- l Fogo = paletteColor $ xterm6LevelRGB 5 4 2
+         | Superficial <- λ st , Flame  <- υ a  , L6 <- l Fogo = paletteColor $ xterm6LevelRGB 5 5 3
+         | Superficial <- λ st , Flame  <- υ a  , L7 <- l Fogo = paletteColor $ xterm6LevelRGB 5 5 4
 
-         | otherwise                                     = greyed
+         | otherwise                                           = color White Vivid
 
    -- | User interface
 
@@ -124,6 +132,7 @@ art st = map pixel hexagon <> ui
    ui = [
       (1,1) % hcat (intersperse (cell ' ') [focus,layer,stat,invi]) ,
       (2,1) % mode ,
+      (succ marginY,1) %^> unit ,
       (succ marginY,1) %.> elements ]
       where
 
@@ -143,6 +152,11 @@ art st = map pixel hexagon <> ui
          | Play  <- μ st = word "Play" # k (paletteColor $ xterm6LevelRGB 3 1 4)
          | Menu  <- μ st = word "Pause for Menu" # color Cyan Dull
          | Pause <- μ st = word "Pause" # color Black Vivid
+
+      unit :: Plane
+      unit
+         | Superficial <- λ st = word $ show (ο st)
+         | otherwise           = word ""
 
       elements :: Plane
       elements
@@ -164,7 +178,7 @@ art st = map pixel hexagon <> ui
                | otherwise                      = cell ' '
 
             level :: Plane
-            level = word $ take (fromEnum (maxBound :: Level)) $ replicate (fromEnum $ ες f Map.! e) '~' <> repeat '·'
+            level = word $ take (fromEnum (maxBound :: Level)) $ replicate (fromEnum $ ες f Map.! e) '|' <> repeat '·'
 
             c :: Draw
                | Superficial <- λ st            = elementColor e

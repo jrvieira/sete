@@ -2,6 +2,7 @@ module Verse.Sim where
 
 import Zero.Zero
 import Verse.Verse
+import Verse.Unit
 import Data.IntMap qualified as IntMap ( (!) )
 import Data.Map.Strict qualified as Map ( (!), mapWithKey )
 import Data.Foldable ( toList )
@@ -13,13 +14,23 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
    where
 
    el :: Element -> Level -> Level
-   el e
-      | Ar    <- e = smoke
-      | Agua  <- e = rippl'
-      | Fogo  <- e = bees
-      | Terra <- e = terra
-      | otherwise  = noise
+   el e = go . op
       where
+
+      -- | Factor object properties
+
+      op :: Level -> Level
+      op = conductivity e (υ a)
+
+      -- | Elemental behaviour
+
+      go
+         | Ar    <- e = smoke
+         | Agua  <- e = rippl'
+         | Fogo  <- e = bees
+         | Terra <- e = terra
+         | Eter  <- e = volt
+         | _     <- e = noise
 
       -- | Get atomic level by index
 
@@ -34,7 +45,7 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
       gene survive born n l
          | length (filter (== maxBound) nvs) ∈ survive , fromEnum l > n-2 = maxBound
          | length (filter (== maxBound) nvs) ∈ born , l < succ minBound = maxBound
-         | l <= toEnum (n - 2) = prev l
+         | l <= toEnum (n-2) = prev l
          | otherwise = toEnum (n-2)
          where
          nvs = toList $ lev <$> ns
@@ -45,6 +56,14 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
    -- glide' = gene [  1,  3,4    ] [    2,3,4,5  ] 5
    -- ripple = gene [  1          ] [  1,2,3,4,5,6] 7
       rippl' = gene [  1,2,  4,5,6] [    2,3,4    ] 7
+
+      volt :: Level -> Level
+      volt l
+         | charge > l = next l
+         | otherwise = prev l
+         where
+         charge = maximum nvs
+         nvs = toList $ lev <$> ns
 
       terra :: Level -> Level
       terra l
