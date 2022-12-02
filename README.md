@@ -2,7 +2,7 @@
 
 hexagonal cellular automata
 
-[![asciicast](https://asciinema.org/a/524159.svg)](https://asciinema.org/a/524159)
+[![asciicast](https://asciinema.org/a/531791.svg)](https://asciinema.org/a/531791)
 
 ## try
 
