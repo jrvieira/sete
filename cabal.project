@@ -1,2 +1,2 @@
 packages: ./sete.cabal
-   , ./vendor/*/*.cabal
+-- , ./vendor/*/*.cabal

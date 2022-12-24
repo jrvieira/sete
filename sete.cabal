@@ -26,7 +26,7 @@ executable sete
       , containers
    -- , ansi-terminal
    -- , vty
-      , ansi-terminal-game == 1.8.0.0
+      , ansi-terminal-game
    -- , brick
    -- , JuicyPixels
    -- , gloss
