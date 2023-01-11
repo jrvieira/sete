@@ -3,7 +3,6 @@ module Verse.Art where
 import Zero.Zero hiding ( (#) )
 import Verse.Conf
 import Verse.Verse
-import Verse.Unit
 import Terminal.Game  -- remove
 import Data.Char ( intToDigit )
 import Data.List ( intersperse )

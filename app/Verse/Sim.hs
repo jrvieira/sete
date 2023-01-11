@@ -30,7 +30,7 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
          | Fogo  <- e = bees
          | Terra <- e = terra
          | Eter  <- e = volt
-         | _     <- e = noise
+      -- | _     <- e = noise
 
       -- | Get atomic level by index
 
@@ -93,8 +93,8 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
          nvs = toList $ lev <$> ns
 
       -- get the (sum ns) index of ρ for a pseudorandom level
-      noise :: Level -> Level
-      noise _ = toEnum $ mod (sum $ fromEnum . lev <$> ns) (fromEnum (maxBound :: Level))
+   -- noise :: Level -> Level
+   -- noise _ = toEnum $ mod (sum $ fromEnum . lev <$> ns) (fromEnum (maxBound :: Level))
 
    -- | Update surface object, depending on current state and Atom properties
 
