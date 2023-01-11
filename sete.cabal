@@ -8,6 +8,7 @@ maintainer: github@jrvieira.com
 extra-source-files: CHANGELOG.md
 
 executable sete
+   hs-source-dirs: app
    main-is: Main.hs
    ghc-options: -O2 -threaded -rtsopts -Wall
 
@@ -31,6 +32,48 @@ executable sete
    -- , JuicyPixels
    -- , gloss
       , split
+      , colour
+   default-language: Haskell2010
+   default-extensions: BangPatterns
+      , ImportQualifiedPost
+      , TupleSections
+      , GADTs
+      , StandaloneDeriving
+      , ScopedTypeVariables
+      , BinaryLiterals
+   -- , GeneralizedNewtypeDeriving
+      , LexicalNegation
+   -- , OverloadedLists
+   -- , OverloadedStrings
+      , TypeApplications
+      , PartialTypeSignatures
+
+executable test
+   hs-source-dirs: test
+   main-is: Main.hs
+   ghc-options: -O2 -threaded -rtsopts -Wall
+
+   -- Modules included in this executable, other than Main.
+   other-modules: Zero.Zero
+      , Zero.Color
+      , Verse.Conf
+      , Verse.Verse
+      , Verse.Unit
+      , Verse.Sim
+      , Verse.Art
+   -- LANGUAGE extensions used by modules in this package.
+   -- other-extensions:
+   build-depends: base
+      , random
+      , containers
+   -- , ansi-terminal
+   -- , vty
+      , ansi-terminal-game
+   -- , brick
+   -- , JuicyPixels
+   -- , gloss
+      , split
+      , colour
    hs-source-dirs: app
    default-language: Haskell2010
    default-extensions: BangPatterns

@@ -130,7 +130,7 @@ type Node = (Atom,Map Dir Int)
 data Atom = Atom { υ :: Unit , ες :: Map Element Level }
 
 atom :: Unit -> Atom
-atom u = Atom { υ = u , ες = Map.fromList $ zip total $ repeat minBound }
+atom u = Atom { υ = u , ες = Map.fromList $ (, minBound) <$> total }
 
 verse :: [Atom] -> Verse
 verse as = IntMap.fromList $ take (width * height) $ n <$> zip [0..] (as <> repeat (atom Void))

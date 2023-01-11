@@ -16,7 +16,7 @@ main :: IO ()
 main = do
    r <- randomRs (minBound,maxBound) <$> initStdGen
    playGame $ Game {
-      gTPS = 19 ,
+      gTPS = 16 ,  -- 19 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = logic ,
       gDrawFunction = draw ,

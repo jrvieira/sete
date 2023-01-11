@@ -1,10 +1,5 @@
 module Verse.Conf where
 
--- testing
-
-test :: Bool
-test = True
-
 -- verse
 
 radius :: Int

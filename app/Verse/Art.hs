@@ -3,7 +3,8 @@ module Verse.Art where
 import Zero.Zero hiding ( (#) )
 import Verse.Conf
 import Verse.Verse
-import Terminal.Game  -- remove
+import Terminal.Game
+import Data.Colour ( blend )
 import Data.Char ( intToDigit )
 import Data.List ( intersperse )
 import Data.Map.Strict qualified as Map ( (!), elems )
@@ -14,17 +15,32 @@ import Control.Monad ( join )
 
 -- | Base color for each element
 
-elementColor :: Element -> Draw
+elementColor :: Element -> Colour Float
 elementColor e
-   | Ar    <- e = color White Dull
-   | Agua  <- e = color Blue Dull
-   | Fogo  <- e = color Red Dull
-   | Terra <- e = color Green Dull
-   | Eter  <- e = color Magenta Dull
--- |       <- e = color Cyan Dull  -- reserved for ui (focus)
--- |       <- e = color Yellow Dull  -- reserved for ui (info)
+   | Ar    <- e = sRGB24 0xd3 0xd3 0xd3
+   | Agua  <- e = sRGB24 0x66 0x99 0xcc
+   | Fogo  <- e = sRGB24 0xf2 0x77 0x7a
+   | Terra <- e = sRGB24 0x99 0xcc 0x99
+   | Eter  <- e = sRGB24 0xcc 0x99 0xcc
+-- |       <- e = sRGB24 0x66 0xcc 0xcc  -- reserved for ui (focus)
+-- |       <- e = sRGB24 0xff 0xcc 0x66  -- reserved for ui (info)
 
 -- | Graphic
+
+termBG :: Colour Float
+termBG = sRGB24 0x22 0x22 0x22
+
+fade :: Level -> Colour Float -> Colour Float
+fade l k = mix l k termBG
+
+mix :: Level -> Colour Float -> Colour Float -> Colour Float
+mix l ka kb = (grade <$> steps) !! fromEnum l
+   where
+   grade x = blend x ka kb
+   steps = [0,0.1..]
+
+grey :: Colour Float
+grey = sRGB24 0x99 0x99 0x99
 
 art :: State -> [Draw]
 art st = map pixel hexagon <> ui
@@ -76,52 +92,45 @@ art st = map pixel hexagon <> ui
 
       clr :: Draw
 
-         | Menu <- μ st                      = color Black Vivid
+         | Menu <- μ st                      = rgbColor grey
 
          | selected , targeted               = color Red Dull
          | adjacent , targeted               = color Red Dull
          |            targeted               = color Red Dull
 
-         | selected , Elemental <- λ st      = elementColor (ε st)
+         | selected , Elemental <- λ st      = rgbColor (elementColor (ε st))
          | selected                          = color Cyan Dull
-         | adjacent , Elemental <- λ st      = elementColor (ε st)
+         | adjacent , Elemental <- λ st      = rgbColor (elementColor (ε st))
          | adjacent                          = color Cyan Vivid
 
          | Pause <- μ st , Elemental <- λ st = greyed (ε st)
-         | Pause <- μ st                     = color Black Vivid
+         | Pause <- μ st                     = rgbColor grey
          | Atom {} <- a                      = stone
 
       -- | otherwise                         = color White Dull
 
       greyed :: Element -> Draw
-      greyed e = paletteColor (xterm24LevelGray $ max 3 $ fromEnum (l e) + 2 * fromEnum (l e))
+      greyed e = rgbColor $ mix (l e) grey termBG
 
       stone :: Draw
-         |                       Void    <- υ a                = paletteColor $ xterm6LevelRGB 0 0 0
+         |                       Void    <- υ a                = rgbColor $ sRGB24 0 0 0
 
          -- Elemental
 
-         | Elemental   <- λ st                                 = greyed (ε st)
+         | Elemental   <- λ st                                 = rgbColor $ fade (l (ε st)) $ elementColor (ε st)
 
          -- Units
 
-         | Superficial <- λ st , Plasma <- υ a  , L0 <- l Eter = paletteColor $ xterm6LevelRGB 0 1 0
-         | Superficial <- λ st , Plasma <- υ a  , L1 <- l Eter = paletteColor $ xterm6LevelRGB 0 1 1
-         | Superficial <- λ st , Plasma <- υ a  , L2 <- l Eter = paletteColor $ xterm6LevelRGB 1 1 2
-         | Superficial <- λ st , Plasma <- υ a  , L3 <- l Eter = paletteColor $ xterm6LevelRGB 2 1 3
-         | Superficial <- λ st , Plasma <- υ a  , L4 <- l Eter = paletteColor $ xterm6LevelRGB 3 1 4
-         | Superficial <- λ st , Plasma <- υ a  , L5 <- l Eter = paletteColor $ xterm6LevelRGB 4 2 5
-         | Superficial <- λ st , Plasma <- υ a  , L6 <- l Eter = paletteColor $ xterm6LevelRGB 5 3 5
-         | Superficial <- λ st , Plasma <- υ a  , L7 <- l Eter = paletteColor $ xterm6LevelRGB 5 4 5
+         | Superficial <- λ st , Plasma <- υ a = rgbColor $ mix (l Eter) (sRGB24 255 204 255) (sRGB24 0 51 0)
 
-         | Superficial <- λ st , Flame  <- υ a  , L0 <- l Fogo = paletteColor $ xterm6LevelRGB 0 0 1  -- orange
-         | Superficial <- λ st , Flame  <- υ a  , L1 <- l Fogo = paletteColor $ xterm6LevelRGB 1 0 1  -- red
-         | Superficial <- λ st , Flame  <- υ a  , L2 <- l Fogo = paletteColor $ xterm6LevelRGB 2 1 1  -- ...
-         | Superficial <- λ st , Flame  <- υ a  , L3 <- l Fogo = paletteColor $ xterm6LevelRGB 3 2 1
-         | Superficial <- λ st , Flame  <- υ a  , L4 <- l Fogo = paletteColor $ xterm6LevelRGB 4 3 1
-         | Superficial <- λ st , Flame  <- υ a  , L5 <- l Fogo = paletteColor $ xterm6LevelRGB 5 4 2
-         | Superficial <- λ st , Flame  <- υ a  , L6 <- l Fogo = paletteColor $ xterm6LevelRGB 5 5 3
-         | Superficial <- λ st , Flame  <- υ a  , L7 <- l Fogo = paletteColor $ xterm6LevelRGB 5 5 4
+         | Superficial <- λ st , Flame  <- υ a  , L0 <- l Fogo = rgbColor $ sRGB24 0 0 0  -- orange
+         | Superficial <- λ st , Flame  <- υ a  , L1 <- l Fogo = rgbColor $ sRGB24 51 51 51  -- red
+         | Superficial <- λ st , Flame  <- υ a  , L2 <- l Fogo = rgbColor $ sRGB24 102 51 51  -- ...
+         | Superficial <- λ st , Flame  <- υ a  , L3 <- l Fogo = rgbColor $ sRGB24 153 102 51
+         | Superficial <- λ st , Flame  <- υ a  , L4 <- l Fogo = rgbColor $ sRGB24 204 153 51
+         | Superficial <- λ st , Flame  <- υ a  , L5 <- l Fogo = rgbColor $ sRGB24 255 204 102
+         | Superficial <- λ st , Flame  <- υ a  , L6 <- l Fogo = rgbColor $ sRGB24 255 255 153
+         | Superficial <- λ st , Flame  <- υ a  , L7 <- l Fogo = rgbColor $ sRGB24 255 255 204
 
          | otherwise                                           = color White Vivid
 
@@ -143,14 +152,14 @@ art st = map pixel hexagon <> ui
       -- inactive color
       k :: Draw -> Draw
       k c
-         | Menu <- μ st = color Black Vivid
+         | Menu <- μ st = rgbColor grey
          | otherwise    = c
 
       mode :: Plane
       mode
-         | Play  <- μ st = word "Play" # k (paletteColor $ xterm6LevelRGB 3 1 4)
+         | Play  <- μ st = word "Play" # k (rgbColor $ sRGB24 153 51 204)
          | Menu  <- μ st = word "Pause for Menu" # color Cyan Dull
-         | Pause <- μ st = word "Pause" # color Black Vivid
+         | Pause <- μ st = word "Pause" # rgbColor grey
 
       unit :: Plane
       unit
@@ -165,24 +174,24 @@ art st = map pixel hexagon <> ui
 
          bar :: Element -> Plane
          bar e = hcat $ intersperse (cell ' ') [
-            level # k c ,
+            level # k id ,
             point # k id ]
             where
 
             point :: Plane
             point
-               | Superficial <- λ st            = cell symbol # color Black Vivid
-               | Elemental   <- λ st , selected = cell symbol # elementColor e
-               | Elemental   <- λ st            = cell symbol # color Black Vivid
+               | Superficial <- λ st            = cell symbol # rgbColor (fade L5 grey)
+               | Elemental   <- λ st , selected = cell symbol # rgbColor (elementColor e)
+               | Elemental   <- λ st            = cell symbol # rgbColor (fade L5 grey)
                | otherwise                      = cell ' '
 
             level :: Plane
-            level = word $ take (fromEnum (maxBound :: Level)) $ replicate (fromEnum $ ες f Map.! e) '|' <> repeat '·'
-
-            c :: Draw
-               | Superficial <- λ st            = elementColor e
-               | Elemental   <- λ st , selected = elementColor e
-               | otherwise                      = color Black Vivid
+            level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate (fromEnum $ ες f Map.! e) '|' <> repeat '·'
+               where
+               x
+                  | Superficial <- λ st            = elementColor e
+                  | Elemental   <- λ st , selected = elementColor e
+                  | otherwise = grey
 
             symbol = head $ show e
             selected = e == ε st
