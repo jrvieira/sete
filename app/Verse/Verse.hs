@@ -58,7 +58,12 @@ instance Random Level where
 
 -- elements
 
-data Element = Eter | Fogo | Ar | Agua | Terra
+data Element = Light
+   | Volt
+   | O2
+   | H2O
+   | Heat
+   | Food
    deriving ( Eq, Enum, Bounded, Show, Ord )
 
 -- units

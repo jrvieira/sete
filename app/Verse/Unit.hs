@@ -30,14 +30,14 @@ type Property = Element -> Unit -> Level -> Level
 -- unit allows element up to L : permeable, non blocking, =
 
 conductivity :: Property
-conductivity Eter u
+conductivity Volt u
    | Battery <- u = const maxBound
    | Wire    <- u = id
    | Lamp    <- u = (- 2)
-conductivity Ar u
+conductivity O2 u
    | Void    <- u = id
    | Flame   <- u = id
-conductivity Terra u
+conductivity Food u
    | Void    <- u = const minBound
 conductivity _ _  = const minBound
 

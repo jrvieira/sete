@@ -30,10 +30,7 @@ quit = const False
 -- | Render the universe
 
 draw :: GEnv -> State -> Plane
-draw _ = foldl (&) canvas . art
-   where
-   canvas :: Plane
-   canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
+draw ge st = centerFull ge $ hcat [hex st,ui st] & (1,1) % makeTransparent ' ' (info st)
 
 -- | One tick
 

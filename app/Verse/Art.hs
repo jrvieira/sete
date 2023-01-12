@@ -17,23 +17,13 @@ import Control.Monad ( join )
 
 elementColor :: Element -> Colour Float
 elementColor e
-   | Ar    <- e = sRGB24 0xd3 0xd3 0xd3
-   | Agua  <- e = sRGB24 0x66 0x99 0xcc
-   | Fogo  <- e = sRGB24 0xf2 0x77 0x7a
-   | Terra <- e = sRGB24 0x99 0xcc 0x99
-   | Eter  <- e = sRGB24 0xcc 0x99 0xcc
+   | Light <- e = sRGB24 0xff 0xcc 0x66
+   | Volt  <- e = sRGB24 0xcc 0x99 0xcc
+   | O2    <- e = sRGB24 0xd3 0xd3 0xd3
+   | H2O   <- e = sRGB24 0x66 0x99 0xcc
+   | Heat  <- e = sRGB24 0xf2 0x77 0x7a
+   | Food  <- e = sRGB24 0x99 0xcc 0x99
 -- |       <- e = sRGB24 0x66 0xcc 0xcc  -- reserved for ui (focus)
--- |       <- e = sRGB24 0xff 0xcc 0x66  -- reserved for ui (info)
-
--- | Elemetal symbols
-
-elementSymbol :: Element -> Char
-elementSymbol e
-   | Ar    <- e = 'o'
-   | Agua  <- e = '~'
-   | Fogo  <- e = '^'
-   | Terra <- e = '#'
-   | Eter  <- e = '*'
 
 -- | Assumed terminal background color
 
@@ -56,19 +46,20 @@ mix l ka kb = (grade <$> steps) !! fromEnum l
 grey :: Colour Float
 grey = mix L1 (sRGB24 0xff 0xff 0xff) termBG
 
--- | Graphical rendering
+-- | Map rendering
 
-art :: State -> [Draw]
-art st = map pixel hexagon <> ui
+hex :: State -> Plane
+hex st = foldl (&) canvas $ map pixel hexagon
    where
+
+   canvas :: Plane
+   canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
 
    hexagon :: [(Int,Int)]
    hexagon = [ (x,y) | x <- [-radius..radius] , y <- [-radius..radius] , abs (x + y) <= radius ]
 
    fi = φ st
    (f,fis) = ν st IntMap.! fi
-
-   -- | Map rendering
 
    pixel :: (Int,Int) -> Draw
    pixel (x,y) = c %.< cell chr # clr
@@ -93,7 +84,7 @@ art st = map pixel hexagon <> ui
          | Elemental <- λ st , selected = intToDigit $ fromEnum (l (ε st))
 
          | Void    <- υ a = '∙'
-         | Plasma  <- υ a = "·-~+=≠cs" !! fromEnum (ες a Map.! Eter)
+         | Plasma  <- υ a = "·-~+=≠cs" !! fromEnum (ες a Map.! Volt)
          | Flame   <- υ a = '^'  -- "#'\"\"^^xx" !! fromEnum (ες a Map.! Fogo)
          | Wire    <- υ a = '='
          | Battery <- υ a = 'E'
@@ -130,92 +121,97 @@ art st = map pixel hexagon <> ui
       greyed e = rgbColor $ mix (l e) grey termBG
 
       stone :: Draw
-
          -- Elemental
-
-         | Elemental   <- λ st                                  = rgbColor $ fade (l (ε st)) $ elementColor (ε st)
-
+         | Elemental   <- λ st                  = rgbColor $ fade (l (ε st)) $ elementColor (ε st)
          -- Units
+         | Superficial <- λ st , Void    <- υ a = rgbColor termBG
+         | Superficial <- λ st , Solar   <- υ a = rgbColor $ sRGB24 51 105 204
+         | Superficial <- λ st , Battery <- υ a = rgbColor $ sRGB24 105 51 51
+         | Superficial <- λ st , Wire    <- υ a = rgbColor $ sRGB24 105 51 51
+         | Superficial <- λ st , Plasma  <- υ a = rgbColor $ mix (l Volt) (sRGB24 255 204 255) (sRGB24 0 51 0)
+         | Superficial <- λ st , Flame   <- υ a = rgbColor $ sRGB24 204 153 51
+         | otherwise                            = color White Vivid
 
-         | Superficial <- λ st , Void    <- υ a                 = rgbColor termBG
+-- | UI rendering
 
-         | Superficial <- λ st , Solar   <- υ a                 = rgbColor $ sRGB24 51 105 204
+ui :: State -> Plane
+ui st = foldl (&) canvas [ (marginX * 2,marginX) % elements ]
+   where
 
-         | Superficial <- λ st , Battery <- υ a                 = rgbColor $ sRGB24 105 51 51
+   canvas :: Plane
+   canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
 
-         | Superficial <- λ st , Wire    <- υ a                 = rgbColor $ sRGB24 105 51 51
+   fi = φ st
+   (f,_) = ν st IntMap.! fi
 
-         | Superficial <- λ st , Plasma  <- υ a                 = rgbColor $ mix (l Eter) (sRGB24 255 204 255) (sRGB24 0 51 0)
+   -- inactive color
+   k :: Draw -> Draw
+   k c
+      | Menu <- μ st = rgbColor grey
+      | otherwise    = c
 
-         | Superficial <- λ st , Flame   <- υ a  , L0 <- l Fogo = rgbColor $ sRGB24 51 51 51
-         | Superficial <- λ st , Flame   <- υ a  , L1 <- l Fogo = rgbColor $ sRGB24 102 51 51
-         | Superficial <- λ st , Flame   <- υ a  , L2 <- l Fogo = rgbColor $ sRGB24 153 51 51
-         | Superficial <- λ st , Flame   <- υ a  , L3 <- l Fogo = rgbColor $ sRGB24 153 102 51
-         | Superficial <- λ st , Flame   <- υ a  , L4 <- l Fogo = rgbColor $ sRGB24 204 153 51
-         | Superficial <- λ st , Flame   <- υ a  , L5 <- l Fogo = rgbColor $ sRGB24 255 204 102
-         | Superficial <- λ st , Flame   <- υ a  , L6 <- l Fogo = rgbColor $ sRGB24 255 255 153
-         | Superficial <- λ st , Flame   <- υ a  , L7 <- l Fogo = rgbColor $ sRGB24 255 255 204
-
-         | otherwise                                           = color White Vivid
-
-   -- | User interface
-
-   ui :: [Draw]
-   ui = [
-      (1,1) % hcat (intersperse (cell ' ') [focus,layer,stat,invi]) ,
-      (2,1) % mode ,
-      (succ marginY,1) %^> unit ,
-      (succ marginY,1) %.> elements ]
+   elements :: Plane
+   elements
+      | λ st ∈ [Superficial,Elemental] = vcat $ bar <$> total
+      | otherwise                      = word ""
       where
 
-      focus = word (show (υ f) <> " " <> show (indexToCoord $ φ st)) # k (color Cyan Dull)
-      layer = word (show (λ st)) # k (color White Dull)
-      stat = word (show $ fromEnum $ sum $ map (sum . Map.elems . ες . fst) $ IntMap.elems $ ν st) # k (color Yellow Dull)
-      invi = word (show $ ι st) # k (color Magenta Dull)
-
-      -- inactive color
-      k :: Draw -> Draw
-      k c
-         | Menu <- μ st = rgbColor grey
-         | otherwise    = c
-
-      mode :: Plane
-      mode
-         | Play  <- μ st = word "Play" # k (rgbColor $ sRGB24 153 51 204)
-         | Menu  <- μ st = word "Pause for Menu" # color Cyan Dull
-         | Pause <- μ st = word "Pause" # rgbColor grey
-
-      unit :: Plane
-      unit
-         | Superficial <- λ st = word $ show (ο st)
-         | otherwise           = word ""
-
-      elements :: Plane
-      elements
-         | λ st ∈ [Superficial,Elemental] = vcat $ bar <$> total
-         | otherwise                      = word ""
+      bar :: Element -> Plane
+      bar e = hcat $ intersperse (cell ' ') [
+         level # k id ,
+         point # k id ]
          where
 
-         bar :: Element -> Plane
-         bar e = hcat $ intersperse (cell ' ') [
-            level # k id ,
-            point # k id ]
+         point :: Plane
+         point
+            | Elemental   <- λ st , selected = word (show e) # rgbColor (elementColor e)
+            | Elemental   <- λ st            = word (show e) # rgbColor (fade L5 grey)
+            | otherwise                      = word (show e) # rgbColor (elementColor e)
+
+         level :: Plane
+         level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate l '|' <> repeat '·'
             where
+            x
+               | Superficial <- λ st            = elementColor e
+               | Elemental   <- λ st , selected = elementColor e
+               | otherwise = grey
 
-            point :: Plane
-            point
-               | Elemental   <- λ st , selected = cell (elementSymbol e) # rgbColor (elementColor e)
-               | Elemental   <- λ st            = cell (elementSymbol e) # rgbColor (fade L5 grey)
-               | otherwise                      = cell (['0'..] !! l) # rgbColor (elementColor e)
+         selected = e == ε st
+         l = fromEnum $ ες f Map.! e
 
-            level :: Plane
-            level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate l '|' <> repeat '·'
-               where
-               x
-                  | Superficial <- λ st            = elementColor e
-                  | Elemental   <- λ st , selected = elementColor e
-                  | otherwise = grey
 
-            selected = e == ε st
-            l = fromEnum $ ες f Map.! e
+info :: State -> Plane
+info st = foldl (&) canvas [
+   (1,1) % hcat (intersperse (cell ' ') [focus,layer,stat,invi]) ,
+   (2,1) % mode ,
+   (succ marginY,1) % unit ]
+   where
+
+   canvas :: Plane
+   canvas = blankPlane (2 * succ (2 * radius) + 2 * 2 * marginX) (succ (2 * radius) + 2 * marginY)
+
+   fi = φ st
+   (f,_) = ν st IntMap.! fi
+
+   focus = word (show (υ f) <> " " <> show (indexToCoord $ φ st)) # k (color Cyan Dull)
+   layer = word (show (λ st)) # k (color White Dull)
+   stat = word (show $ fromEnum $ sum $ map (sum . Map.elems . ες . fst) $ IntMap.elems $ ν st) # k (color Yellow Dull)
+   invi = word (show $ ι st) # k (color Magenta Dull)
+
+   -- inactive color
+   k :: Draw -> Draw
+   k c
+      | Menu <- μ st = rgbColor grey
+      | otherwise    = c
+
+   mode :: Plane
+   mode
+      | Play  <- μ st = word "Play" # k (rgbColor $ sRGB24 153 51 204)
+      | Menu  <- μ st = word "Pause for Menu" # color Cyan Dull
+      | Pause <- μ st = word "Pause" # rgbColor grey
+
+   unit :: Plane
+   unit
+      | Superficial <- λ st = word $ show (ο st)
+      | otherwise           = word ""
 
