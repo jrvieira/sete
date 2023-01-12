@@ -25,10 +25,22 @@ elementColor e
 -- |       <- e = sRGB24 0x66 0xcc 0xcc  -- reserved for ui (focus)
 -- |       <- e = sRGB24 0xff 0xcc 0x66  -- reserved for ui (info)
 
--- | Graphic
+-- | Elemetal symbols
+
+elementSymbol :: Element -> Char
+elementSymbol e
+   | Ar    <- e = 'o'
+   | Agua  <- e = '~'
+   | Fogo  <- e = '^'
+   | Terra <- e = '#'
+   | Eter  <- e = '*'
+
+-- | Assumed terminal background color
 
 termBG :: Colour Float
 termBG = sRGB24 0x22 0x22 0x22
+
+-- | Color blending
 
 fade :: Level -> Colour Float -> Colour Float
 fade l k = mix l k termBG
@@ -39,8 +51,12 @@ mix l ka kb = (grade <$> steps) !! fromEnum l
    grade x = blend x ka kb
    steps = [0,0.1..]
 
+-- | Useful grey tone
+
 grey :: Colour Float
-grey = sRGB24 0x99 0x99 0x99
+grey = mix L1 (sRGB24 0xff 0xff 0xff) termBG
+
+-- | Graphical rendering
 
 art :: State -> [Draw]
 art st = map pixel hexagon <> ui
@@ -76,11 +92,12 @@ art st = map pixel hexagon <> ui
       chr :: Char
          | Elemental <- λ st , selected = intToDigit $ fromEnum (l (ε st))
 
-         | Void    <- υ a = '.'
+         | Void    <- υ a = '∙'
          | Plasma  <- υ a = "·-~+=≠cs" !! fromEnum (ες a Map.! Eter)
-         | Flame   <- υ a = "#'\"\"^^xx" !! fromEnum (ες a Map.! Fogo)
-         | Wire    <- υ a = '*'
+         | Flame   <- υ a = '^'  -- "#'\"\"^^xx" !! fromEnum (ες a Map.! Fogo)
+         | Wire    <- υ a = '='
          | Battery <- υ a = 'E'
+         | Solar   <- υ a = '#'
       -- | _       <- υ a = 'x'
       -- | _       <- υ a = '+'
       -- | _       <- υ a = ':'
@@ -113,24 +130,31 @@ art st = map pixel hexagon <> ui
       greyed e = rgbColor $ mix (l e) grey termBG
 
       stone :: Draw
-         |                       Void    <- υ a                = rgbColor $ sRGB24 0 0 0
 
          -- Elemental
 
-         | Elemental   <- λ st                                 = rgbColor $ fade (l (ε st)) $ elementColor (ε st)
+         | Elemental   <- λ st                                  = rgbColor $ fade (l (ε st)) $ elementColor (ε st)
 
          -- Units
 
-         | Superficial <- λ st , Plasma <- υ a = rgbColor $ mix (l Eter) (sRGB24 255 204 255) (sRGB24 0 51 0)
+         | Superficial <- λ st , Void    <- υ a                 = rgbColor termBG
 
-         | Superficial <- λ st , Flame  <- υ a  , L0 <- l Fogo = rgbColor $ sRGB24 0 0 0  -- orange
-         | Superficial <- λ st , Flame  <- υ a  , L1 <- l Fogo = rgbColor $ sRGB24 51 51 51  -- red
-         | Superficial <- λ st , Flame  <- υ a  , L2 <- l Fogo = rgbColor $ sRGB24 102 51 51  -- ...
-         | Superficial <- λ st , Flame  <- υ a  , L3 <- l Fogo = rgbColor $ sRGB24 153 102 51
-         | Superficial <- λ st , Flame  <- υ a  , L4 <- l Fogo = rgbColor $ sRGB24 204 153 51
-         | Superficial <- λ st , Flame  <- υ a  , L5 <- l Fogo = rgbColor $ sRGB24 255 204 102
-         | Superficial <- λ st , Flame  <- υ a  , L6 <- l Fogo = rgbColor $ sRGB24 255 255 153
-         | Superficial <- λ st , Flame  <- υ a  , L7 <- l Fogo = rgbColor $ sRGB24 255 255 204
+         | Superficial <- λ st , Solar   <- υ a                 = rgbColor $ sRGB24 51 105 204
+
+         | Superficial <- λ st , Battery <- υ a                 = rgbColor $ sRGB24 105 51 51
+
+         | Superficial <- λ st , Wire    <- υ a                 = rgbColor $ sRGB24 105 51 51
+
+         | Superficial <- λ st , Plasma  <- υ a                 = rgbColor $ mix (l Eter) (sRGB24 255 204 255) (sRGB24 0 51 0)
+
+         | Superficial <- λ st , Flame   <- υ a  , L0 <- l Fogo = rgbColor $ sRGB24 51 51 51
+         | Superficial <- λ st , Flame   <- υ a  , L1 <- l Fogo = rgbColor $ sRGB24 102 51 51
+         | Superficial <- λ st , Flame   <- υ a  , L2 <- l Fogo = rgbColor $ sRGB24 153 51 51
+         | Superficial <- λ st , Flame   <- υ a  , L3 <- l Fogo = rgbColor $ sRGB24 153 102 51
+         | Superficial <- λ st , Flame   <- υ a  , L4 <- l Fogo = rgbColor $ sRGB24 204 153 51
+         | Superficial <- λ st , Flame   <- υ a  , L5 <- l Fogo = rgbColor $ sRGB24 255 204 102
+         | Superficial <- λ st , Flame   <- υ a  , L6 <- l Fogo = rgbColor $ sRGB24 255 255 153
+         | Superficial <- λ st , Flame   <- υ a  , L7 <- l Fogo = rgbColor $ sRGB24 255 255 204
 
          | otherwise                                           = color White Vivid
 
@@ -180,19 +204,18 @@ art st = map pixel hexagon <> ui
 
             point :: Plane
             point
-               | Superficial <- λ st            = cell symbol # rgbColor (fade L5 grey)
-               | Elemental   <- λ st , selected = cell symbol # rgbColor (elementColor e)
-               | Elemental   <- λ st            = cell symbol # rgbColor (fade L5 grey)
-               | otherwise                      = cell ' '
+               | Elemental   <- λ st , selected = cell (elementSymbol e) # rgbColor (elementColor e)
+               | Elemental   <- λ st            = cell (elementSymbol e) # rgbColor (fade L5 grey)
+               | otherwise                      = cell (['0'..] !! l) # rgbColor (elementColor e)
 
             level :: Plane
-            level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate (fromEnum $ ες f Map.! e) '|' <> repeat '·'
+            level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate l '|' <> repeat '·'
                where
                x
                   | Superficial <- λ st            = elementColor e
                   | Elemental   <- λ st , selected = elementColor e
                   | otherwise = grey
 
-            symbol = head $ show e
             selected = e == ε st
+            l = fromEnum $ ες f Map.! e
 

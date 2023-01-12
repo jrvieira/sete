@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Eta reduce" #-}
 module Verse.Verse where
 
 import Zero.Zero
@@ -56,7 +58,7 @@ instance Random Level where
 
 -- elements
 
-data Element = Ar | Agua | Fogo | Terra | Eter -- air, water, fire, earth, aether
+data Element = Eter | Fogo | Ar | Agua | Terra
    deriving ( Eq, Enum, Bounded, Show, Ord )
 
 -- units
@@ -70,6 +72,7 @@ data Element = Ar | Agua | Fogo | Terra | Eter -- air, water, fire, earth, aethe
 data Unit = Void
    | Battery
    | Wire
+   | Solar
 -- | Well
    | Lamp
 -- | Plant

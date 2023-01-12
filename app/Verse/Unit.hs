@@ -36,7 +36,10 @@ conductivity Eter u
    | Lamp    <- u = (- 2)
 conductivity Ar u
    | Void    <- u = id
-conductivity _ _  = id -- const minBound
+   | Flame   <- u = id
+conductivity Terra u
+   | Void    <- u = const minBound
+conductivity _ _  = const minBound
 
 -- -- unit consumes element up to L : absorvent, resistive, -
 -- abductive :: Property
