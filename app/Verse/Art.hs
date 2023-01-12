@@ -164,17 +164,17 @@ ui st = foldl (&) canvas [ (marginX * 2,marginX) % elements ]
 
          point :: Plane
          point
+            | Superficial <- λ st            = word (show e) # rgbColor (fade (toEnum l) $ elementColor e)
             | Elemental   <- λ st , selected = word (show e) # rgbColor (elementColor e)
-            | Elemental   <- λ st            = word (show e) # rgbColor (fade L5 grey)
-            | otherwise                      = word (show e) # rgbColor (elementColor e)
+            | otherwise                      = word (show e) # rgbColor (fade L5 grey)
 
          level :: Plane
-         level = hcat $ zipWith (rgbColor . flip fade x) total $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate l '|' <> repeat '·'
+         level = rgbColor (fade (toEnum l) x) $ hcat $ map cell $ take (fromEnum (maxBound :: Level)) $ replicate l '/' <> repeat ' '
             where
             x
                | Superficial <- λ st            = elementColor e
                | Elemental   <- λ st , selected = elementColor e
-               | otherwise = grey
+               | otherwise                      = grey
 
          selected = e == ε st
          l = fromEnum $ ες f Map.! e

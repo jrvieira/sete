@@ -1,6 +1,6 @@
 module Verse.Sim where
 
--- import Zero.Zero
+import Zero.Zero
 import Verse.Verse
 import Verse.Unit
 import Data.IntMap qualified as IntMap ( (!) )
@@ -18,17 +18,20 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
       -- | Factor object properties
 
       op :: Level -> Level
-      op = conductivity e (υ a)
+      op l
+         | Volt <- e , Battery <- υ a = signum (sum $ lev <$> ns)
+         | Volt <- e , Wire    <- υ a = sum $ lev <$> ns
+         | otherwise = prev l
 
       -- | Elemental behaviour
 
       go
-         | Volt  <- e = noise
-         | O2    <- e = noise
-         | H2O   <- e = noise
-         | Heat  <- e = noise
-         | Food  <- e = noise
-         | _     <- e = noise
+         | Volt  <- e = id
+         | O2    <- e = id
+         | H2O   <- e = id
+         | Heat  <- e = id
+         | Food  <- e = id
+         | _     <- e = id
 
       -- | Get atomic level by index
 
