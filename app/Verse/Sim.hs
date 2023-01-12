@@ -19,8 +19,11 @@ sim st (a,ns) = ob (a { ες = Map.mapWithKey el (ες a) } , ns)
 
       op :: Level -> Level
       op l
-         | Volt <- e , Battery <- υ a = signum (sum $ lev <$> ns)
-         | Volt <- e , Wire    <- υ a = sum $ lev <$> ns
+         | Volt <- e , Battery <- υ a , 0 <- l = next $ sum $ lev <$> ns
+         | Volt <- e , Battery <- υ a          = prev l
+         | Volt <- e , Wire    <- υ a , 0 <- l = maximum $ lev <$> ns
+         | Volt <- e , Wire    <- υ a          = prev l
+         | Volt <- e , Lamp    <- υ a          = prev $ maximum $ lev <$> ns
          | otherwise = prev l
 
       -- | Elemental behaviour
