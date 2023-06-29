@@ -10,11 +10,10 @@ main = do
       gTPS = 1 ,
       gInitState = state ,
       gLogicFunction = logic ,
-      gDrawFunction = draw ,
-      gQuitFunction = const False }
+      gDrawFunction = draw }
 
-logic :: GEnv -> State -> Event -> State
-logic _ st _ = st
+logic :: GEnv -> State -> Event -> Either () State
+logic _ st _ = Right $ st
 
 draw :: GEnv -> State -> Plane
 draw _ _ = vcat [

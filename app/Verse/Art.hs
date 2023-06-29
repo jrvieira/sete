@@ -2,7 +2,9 @@ module Verse.Art where
 
 import Zero.Zero hiding ( (#) )
 import Verse.Conf
+import Verse.Plane
 import Verse.Verse
+
 import Terminal.Game
 import Data.Colour ( blend )
 import Data.Char ( intToDigit )

@@ -1,6 +1,5 @@
 module Verse.Unit where
 
-import Verse.Verse
 -- import Data.Map
 
 -- | Elemental traits of units

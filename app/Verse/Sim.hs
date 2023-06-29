@@ -2,7 +2,7 @@ module Verse.Sim where
 
 import Zero.Zero
 import Verse.Verse
-import Verse.Unit
+-- import Verse.Unit
 import Data.IntMap qualified as IntMap ( (!) )
 import Data.Map.Strict qualified as Map ( (!), mapWithKey )
 
