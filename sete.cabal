@@ -22,17 +22,17 @@ executable sete
       , Verse.Art
    -- LANGUAGE extensions used by modules in this package.
    -- other-extensions:
-   build-depends: base
-      , random
-      , containers
+   build-depends: base >= 4.18.0 && < 4.19
+      , random >= 1.2.1 && < 1.3
+      , containers >= 0.6.7 && < 0.7
    -- , ansi-terminal
    -- , vty
-      , ansi-terminal-game
+      , ansi-terminal-game >= 1.9.1 && < 1.10
    -- , brick
    -- , JuicyPixels
    -- , gloss
-      , split
-      , colour
+      , split >= 0.2.3 && < 0.3
+      , colour >= 2.3.6 && < 2.4
    default-language: Haskell2010
    default-extensions: BangPatterns
       , ImportQualifiedPost
@@ -57,23 +57,24 @@ executable test
    other-modules: Zero.Zero
       , Zero.Color
       , Verse.Conf
+      , Verse.Plane
       , Verse.Verse
       , Verse.Unit
       , Verse.Sim
       , Verse.Art
    -- LANGUAGE extensions used by modules in this package.
    -- other-extensions:
-   build-depends: base
-      , random
-      , containers
+   build-depends: base >= 4.18.0 && < 4.19
+      , random >= 1.2.1 && < 1.3
+      , containers >= 0.6.7 && < 0.7
    -- , ansi-terminal
    -- , vty
-      , ansi-terminal-game
+      , ansi-terminal-game >= 1.9.1 && < 1.10
    -- , brick
    -- , JuicyPixels
    -- , gloss
-      , split
-      , colour
+      , split >= 0.2.3 && < 0.3
+      , colour >= 2.3.6 && < 2.4
    hs-source-dirs: app
    default-language: Haskell2010
    default-extensions: BangPatterns
@@ -89,3 +90,4 @@ executable test
    -- , OverloadedStrings
       , TypeApplications
       , PartialTypeSignatures
+

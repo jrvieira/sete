@@ -19,13 +19,7 @@ main = do
       gTPS = 16 ,  -- 19 ,
       gInitState = state { ρ = r } ,
       gLogicFunction = logic ,
-      gDrawFunction = draw ,
-      gQuitFunction = quit }
-
--- | Quit condition
-
-quit :: State -> Bool
-quit = const False
+      gDrawFunction = draw }
 
 -- | Render the universe
 
@@ -44,9 +38,9 @@ step st
 
 -- | Catch user input
 
-logic :: GEnv -> State -> Event -> State
-logic _ st Tick = step st
-logic _ st (KeyPress k) = st' { ι = k }
+logic :: GEnv -> State -> Event -> Either () State
+logic _ st Tick = Right $ step st
+logic _ st (KeyPress k) = Right $ st' { ι = k }
    where
 
    st'
