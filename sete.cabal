@@ -28,7 +28,7 @@ executable sete
       , containers >= 0.6.7 && < 0.7
    -- , ansi-terminal
    -- , vty
-      , ansi-terminal-game >= 1.9.1 && < 1.10,
+      , ansi-terminal-game >= 1.9.1 && < 1.10
    -- , brick
    -- , JuicyPixels
    -- , gloss
@@ -70,7 +70,7 @@ executable test
       , containers >= 0.6.7 && < 0.7
    -- , ansi-terminal
    -- , vty
-      , ansi-terminal-game >= 1.9.1 && < 1.10,
+      , ansi-terminal-game >= 1.9.1 && < 1.10
    -- , brick
    -- , JuicyPixels
    -- , gloss
