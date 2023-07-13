@@ -8,8 +8,9 @@ maintainer: github@jrvieira.com
 extra-source-files: CHANGELOG.md
 
 executable sete
+   hs-source-dirs: app
    main-is: Main.hs
-   ghc-options: -O2 -threaded -rtsopts
+   ghc-options: -O2 -threaded -rtsopts -Wall
 
    -- Modules included in this executable, other than Main.
    other-modules: Zero.Zero
@@ -20,15 +21,59 @@ executable sete
       , Verse.Sim
    -- LANGUAGE extensions used by modules in this package.
    -- other-extensions:
-   build-depends: base
-      , random
-      , containers
+   build-depends: base >= 4.18.0 && < 4.19
+      , random >= 1.2.1 && < 1.3
+      , containers >= 0.6.7 && < 0.7
    -- , ansi-terminal
    -- , vty
       , ansi-terminal-game == 1.8.0.0
    -- , brick
    -- , JuicyPixels
    -- , gloss
+      , split >= 0.2.3 && < 0.3
+      , colour >= 2.3.6 && < 2.4
+   default-language: Haskell2010
+   default-extensions: BangPatterns
+      , ImportQualifiedPost
+      , TupleSections
+      , GADTs
+      , StandaloneDeriving
+      , ScopedTypeVariables
+      , BinaryLiterals
+   -- , GeneralizedNewtypeDeriving
+      , LexicalNegation
+   -- , OverloadedLists
+   -- , OverloadedStrings
+      , TypeApplications
+      , PartialTypeSignatures
+
+executable test
+   hs-source-dirs: test
+   main-is: Main.hs
+   ghc-options: -O2 -threaded -rtsopts -Wall
+
+   -- Modules included in this executable, other than Main.
+   other-modules: Zero.Zero
+      , Zero.Color
+      , Verse.Conf
+      , Verse.Plane
+      , Verse.Verse
+      , Verse.Unit
+      , Verse.Sim
+      , Verse.Art
+   -- LANGUAGE extensions used by modules in this package.
+   -- other-extensions:
+   build-depends: base >= 4.18.0 && < 4.19
+      , random >= 1.2.1 && < 1.3
+      , containers >= 0.6.7 && < 0.7
+   -- , ansi-terminal
+   -- , vty
+      , ansi-terminal-game == 1.8.0.0
+   -- , brick
+   -- , JuicyPixels
+   -- , gloss
+      , split >= 0.2.3 && < 0.3
+      , colour >= 2.3.6 && < 2.4
    hs-source-dirs: app
    default-language: Haskell2010
    default-extensions: BangPatterns
@@ -39,8 +84,9 @@ executable sete
       , ScopedTypeVariables
       , BinaryLiterals
    -- , GeneralizedNewtypeDeriving
-   -- , LexicalNegation
+      , LexicalNegation
    -- , OverloadedLists
    -- , OverloadedStrings
       , TypeApplications
       , PartialTypeSignatures
+
