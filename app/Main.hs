@@ -21,11 +21,6 @@ main = do
       gLogicFunction = logic ,
       gDrawFunction = draw }
 
--- | Quit condition
-
-quit :: State -> Bool
-quit = const False
-
 -- | Render the universe
 
 draw :: GEnv -> State -> Plane
