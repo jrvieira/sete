@@ -7,7 +7,7 @@ maintainer: github@jrvieira.com
 
 extra-source-files: CHANGELOG.md
 
-executable seis
+executable sete
    main-is: Main.hs
    ghc-options: -O2 -threaded -rtsopts
 
