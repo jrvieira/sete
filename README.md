@@ -4,12 +4,13 @@ basic exagonal model
 
 # modules
 
-Main # simulation loop
+- Main : simulation loop
 
-Verse.Setup # configuration variables
-Verse.Plane # geometry model
-Verse.State # program state
-Verse.Logic # control interaction + step simualtion
-Verse.Print # display art
-Verse.Verse # objects
+- Verse
+  - Setup - configuration variables
+  - Plane - geometry model
+  - State - program state
+  - Logic - control interaction + step simualtion
+  - Print - display art
+  - Verse - objects
 
