@@ -1,11 +1,15 @@
-# Sete
+# sete
 
-hexagonal cellular automata
+basic exagonal model
 
-[![asciicast](https://asciinema.org/a/531507.svg)](https://asciinema.org/a/531507)
+# modules
 
-## try
+Main # simulation loop
 
-### nice pattern
+Verse.Setup # configuration variables
+Verse.Plane # geometry model
+Verse.State # program state
+Verse.Logic # control interaction + step simualtion
+Verse.Print # display art
+Verse.Verse # objects
 
-running Dois from random noise, let it stabilize then switch to Terra

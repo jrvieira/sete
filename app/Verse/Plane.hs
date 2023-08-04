@@ -1,8 +1,24 @@
 module Verse.Plane where
 
-import Verse.Conf
+import Zero ( total )
+
+import Verse.Setup
+import Verse.Verse
 
 import Data.Tuple ( swap )
+import Data.Map.Strict ( Map )
+import Data.Map.Strict qualified as Map ( fromList )
+import Data.IntMap ( IntMap )
+import Data.IntMap qualified as IntMap ( fromList )
+import Control.Arrow
+
+type Node = (Atom,Map Dir Int)
+
+plane :: [Atom] -> IntMap Node
+plane as = IntMap.fromList $ take (width * height) $ map n $ zip [0..] (as <> repeat Void)
+   where
+   n :: (Int,Atom) -> (Int,Node)
+   n (i,a) = (i, (a , Map.fromList $ (id &&& ($ i) . move 1) <$> total))
 
 -- coord
 

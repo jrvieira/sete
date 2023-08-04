@@ -1,6 +1,6 @@
-module Verse.Conf where
+module Verse.Setup where
 
--- verse
+-- plane
 
 radius :: Int
 radius = 11
@@ -10,6 +10,8 @@ width = 3 * radius
 
 height :: Int
 height = radius
+
+-- print
 
 marginX :: Int
 marginX = 2
