@@ -17,15 +17,15 @@ executable sete
    main-is: Main.hs
    other-modules: Verse.Setup
       -- geometry model
-      , Verse.Plane
+      , Verse.Verse
       -- program state
       , Verse.State
       -- control interaction + step simulation
       , Verse.Logic
       -- display art
-      , Verse.Print
+      , Verse.Pixel
       -- objects
-      , Verse.Verse
+      , Verse.Atoms
 
    -- other-extensions:
    build-depends: base ^>=4.18.0.0

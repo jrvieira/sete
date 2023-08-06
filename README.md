@@ -8,9 +8,9 @@ basic exagonal model
 
 - Verse
   - Setup : configuration variables
-  - Plane : geometry model
+  - Verse : geometry model
   - State : program state
   - Logic : control interaction + step simualtion
-  - Print : display art
-  - Verse : objects
+  - Pixel : display art
+  - Atoms : objects
 

@@ -1,6 +1,6 @@
 module Verse.State where
 
-import Verse.Plane ( Node, plane )
+import Verse.Verse ( Node, verse )
 
 import Data.IntMap ( IntMap )
 import Data.IntSet ( IntSet )
@@ -15,7 +15,7 @@ data State = Σ {
 
 state :: State
 state = Σ {
-   nodes = plane [] ,
+   nodes = verse [] ,
    play = False ,
    input = 'p' ,
    center = 0 ,

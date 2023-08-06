@@ -1,11 +1,11 @@
-module Verse.Print where
+module Verse.Pixel where
 
 import Zero hiding ( (#) )
 
 import Verse.Setup
 import Verse.State
-import Verse.Plane
 import Verse.Verse
+import Verse.Atoms
 
 import Terminal.Game
 
@@ -15,8 +15,8 @@ import Data.Colour ( blend )
 import Data.Bifunctor ( bimap )
 import Control.Monad ( join )
 
-picture :: State -> Plane
-picture st = hcat [hex,ui]
+plane :: State -> Plane
+plane st = hcat [hex,ui]
    & (1,1) % makeTransparent ' ' (word $ show (focus st))
 
    where

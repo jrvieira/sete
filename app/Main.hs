@@ -1,9 +1,9 @@
 module Main where
 
 import Verse.State
+import Verse.Verse
 import Verse.Logic ( step )
-import Verse.Plane
-import Verse.Print
+import Verse.Pixel
 
 import Terminal.Game
 
@@ -15,12 +15,12 @@ main = do
       gTPS = 16 ,
       gInitState = state ,
       gLogicFunction = logic ,
-      gDrawFunction = draw }
+      gDrawFunction = pixel }
 
 -- | Render the universe
 
-draw :: GEnv -> State -> Plane
-draw ge = centerFull ge . picture
+pixel :: GEnv -> State -> Plane
+pixel ge = centerFull ge . plane
 
 -- | Catch user input
 
