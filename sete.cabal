@@ -27,7 +27,7 @@ executable sete
 
    -- other-extensions:
    build-depends: base ^>=4.18.0.0
-      , Zero
+      , zero
       , ansi-terminal-game
       , containers
       , colour
