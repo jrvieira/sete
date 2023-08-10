@@ -1,2 +1,2 @@
 packages: ./sete.cabal
-   , ./src/zero/zero.cabal
+   , ./src/Zero/Zero.cabal
