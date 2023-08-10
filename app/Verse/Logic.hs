@@ -20,9 +20,7 @@ step st
    sim k (as,es) (vi,ve) = (insert k v vi,insert k (as',es) ve)
       where
 
-      (v,as') = go as e 0 (View {
-         atom = Base ,
-         z = 0 })
+      (v,as') = go as e 0 base
 
       e = (<> repeat Void) . fst . (ν st IntMap.!) <$> es
 

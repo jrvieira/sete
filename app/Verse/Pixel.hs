@@ -73,7 +73,7 @@ plane st = hcat [hex,ents,ui]
          | not (play st)               = rgbColor $ fog grey
          | zlevel st /= z v            = rgbColor $ fog grey
 
-         | Base <- atom v              = color Yellow Dull
+         | Base <- atom v              = rgbColor termBG  -- color Yellow Dull
          | Void <- atom v              = color White Dull
          | Track Dirt <- unit (atom v) = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
 
