@@ -1,5 +1,7 @@
 module Main where
 
+import Zero ( next, prev )
+
 import Verse.State
 import Verse.Verse
 import Verse.Logic ( step )
@@ -15,12 +17,12 @@ main = do
       gTPS = 16 ,
       gInitState = state ,
       gLogicFunction = logic ,
-      gDrawFunction = pixel }
+      gDrawFunction = draw }
 
 -- | Render the universe
 
-pixel :: GEnv -> State -> Plane
-pixel ge = centerFull ge . plane
+draw :: GEnv -> State -> Plane
+draw g = centerFull g . plane
 
 -- | Catch user input
 
@@ -59,6 +61,11 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
       | 'I' <- k             = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
       | 'N' <- k             = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
       | 'M' <- k             = st { center = move 1 M (center st) , focus = move 1 M (focus st) }
+
+      -- z level
+
+      | '>' <- k             = st { zlevel = next (zlevel st) }
+      | '<' <- k             = st { zlevel = prev (zlevel st) }
 
       -- target
 

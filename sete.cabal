@@ -24,8 +24,6 @@ executable sete
       , Verse.Logic
       -- display art
       , Verse.Pixel
-      -- objects
-      , Verse.Atoms
 
    -- other-extensions:
    build-depends: base ^>=4.18.0.0

@@ -12,5 +12,4 @@ basic exagonal model
   - State : program state
   - Logic : control interaction + step simualtion
   - Pixel : display art
-  - Atoms : objects
 

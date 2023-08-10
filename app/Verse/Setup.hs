@@ -19,3 +19,6 @@ marginX = 2
 marginY :: Int
 marginY = 3
 
+zlevel :: Word
+zlevel = 0
+

@@ -1,23 +1,32 @@
 module Verse.State where
 
-import Verse.Verse ( Node, verse )
+import Verse.Setup qualified as Setup
+import Verse.Verse
 
 import Data.IntMap ( IntMap )
 import Data.IntSet ( IntSet )
 
 data State = Σ {
-   nodes :: IntMap Node ,
+   ν :: IntMap (Node [Atom]) ,
    play :: Bool ,
    input :: Char ,
    center :: Int ,
    focus :: Int ,
-   targets :: IntSet }
+   targets :: IntSet ,
+   layer :: Layer ,
+   zlevel :: Word ,
+   view :: IntMap View }
 
 state :: State
 state = Σ {
-   nodes = verse [] ,
+   ν = seed ,
    play = False ,
    input = 'p' ,
    center = 0 ,
    focus = 0 ,
-   targets = mempty }
+   targets = mempty ,
+   layer = Surface ,
+   zlevel = Setup.zlevel ,
+   view = mempty }
+   where
+   seed = verse []
