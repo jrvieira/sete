@@ -3,6 +3,7 @@ module Verse.Logic where
 import Verse.State
 import Verse.Verse
 
+import Data.Bifunctor ( bimap )
 import Data.IntMap ( IntMap, foldrWithKey, insert )
 import Data.IntMap qualified as IntMap
 
@@ -16,8 +17,8 @@ step st
 
    (view',ν') = foldrWithKey sim (mempty,mempty) (ν st)
 
-   sim :: Int -> Node [Atom] -> (IntMap View,IntMap (Node [Atom])) -> (IntMap View,IntMap (Node [Atom]))
-   sim k (as,es) (vi,ve) = (insert k v vi,insert k (as',es) ve)
+   sim :: Int -> Node [Atom] -> (IntMap View,Verse) -> (IntMap View,Verse)
+   sim k (as,es) = bimap (insert k v) (insert k (as',es))
       where
 
       (v,as') = go as e 0 base
@@ -32,6 +33,11 @@ step st
       go (a:as) e' z v' = (v''',a':as')
          where
 
+         aa :: Atom
+         aa
+            | (x:_) <- as = x
+            | otherwise = Void
+
          Edge (u:us) (i:is) (h:hs) (l:ls) (n:ns) (m:ms) = e'
          e = Edge u i h l n m
 
@@ -45,11 +51,6 @@ step st
                atom = a ,
                z = z }
 
-         aa :: Atom
-         aa
-            | (x:_) <- as = x
-            | otherwise = Void
-
          -- TODO:
          -- implement gravity physics fall
 
@@ -62,3 +63,16 @@ step st
 
          -- TODO:
          -- water physics
+
+         -- while Units are manipulated directly by the user
+         -- Items are manipulated ONLY by automated Units
+
+         -- fire spreads like water (when an atom reaches L7 it "spews" to flammable neighbours)
+         -- radio waves spread on L1
+
+         -- water spills to neighbours when it reaches 7:
+         -- 1 remains in center, all neighbours get 1
+         -- neighbours know this by "transfer" mechanism
+         -- water flows upwards when it cant flow down or sides
+
+
