@@ -59,11 +59,10 @@ plane st = hcat [hex,ents,ui]
       targeted :: Bool = zlevel st == z v && IntSet.member n (targets st)
 
       chr :: Char
-         | Base     <- atom v        = '.'
-         | Void     <- atom v        = ' '
-         | Floor _  <- unit (atom v) = '.'
-         | Track _  <- unit (atom v) = '#'
-         | otherwise                 = '?'
+         | Base  <- atom v             = '.'
+         | Void  <- atom v             = ' '
+         | Track <- structure (atom v) = '#'
+         | otherwise                   = '?'
 
       clr :: Draw
          | targeted                    = color Red Dull
@@ -73,9 +72,12 @@ plane st = hcat [hex,ents,ui]
          | not (play st)               = rgbColor $ fog grey
          | zlevel st /= z v            = rgbColor $ fog grey
 
-         | Base <- atom v              = rgbColor termBG  -- color Yellow Dull
-         | Void <- atom v              = color White Dull
-         | Track Dirt <- unit (atom v) = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
+         | Base  <- atom v              = color Yellow Dull
+         | Void  <- atom v              = color White Dull
+         | Dirt  <- material (atom v)   = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
+         | Wood  <- material (atom v)   = rgbColor $ fog $ sRGB24 0x60 0x30 0x00
+         | Stone <- material (atom v)   = rgbColor $ fog $ sRGB24 0x16 0x16 0x16
+         | Metal <- material (atom v)   = rgbColor $ fog $ sRGB24 0x30 0x30 0x60
 
          | otherwise                   = color White Dull
 
@@ -114,4 +116,4 @@ mix :: Word -> Colour Float -> Colour Float -> Colour Float
 mix l ka kb = (grade <$> steps) !! fromEnum l
    where
    grade x = blend x ka kb
-   steps = [0,0.1..]
+   steps = [0,0.25..1] <> repeat 1
