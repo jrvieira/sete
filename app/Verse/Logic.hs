@@ -23,7 +23,7 @@ step st
 
       (v,as') = go as e 0 base
 
-      e = (<> repeat Void) . fst . (ν st IntMap.!) <$> es
+      e = (<> repeat void) . fst . (ν st IntMap.!) <$> es
 
       -- each Node stores a vertical list of atoms and Edge, a set of pointers to adjacent nodes
       -- each list of Atoms is traversed from bottom to top, the traversal is synced between all 7 nodes
@@ -36,7 +36,7 @@ step st
          aa :: Atom
          aa
             | (x:_) <- as = x
-            | otherwise = Void
+            | otherwise = void
 
          Edge (u:us) (i:is) (h:hs) (l:ls) (n:ns) (m:ms) = e'
          e = Edge u i h l n m
@@ -46,7 +46,6 @@ step st
          v'' :: View
          v''
             | zlevel st > z = v'
-            | Void <- a = v'
             | otherwise = v' {
                atom = a ,
                z = z }
@@ -57,7 +56,6 @@ step st
          -- This needs some work
          a' :: Atom
          a'
-            | Void <- a = a
             | Atom { } <- a = a
             | otherwise = a
 

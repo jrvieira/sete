@@ -9,7 +9,7 @@ import Data.Bifunctor ( first )
 import Data.Set ( Set )
 import Data.Set qualified as Set ( fromList )
 import Data.Map.Strict ( Map )
-import Data.Map.Strict qualified as Map ( fromList, filter, keys )
+import Data.Map.Strict qualified as Map ( empty, fromList, filter, keys )
 import Data.IntMap ( IntMap )
 import Data.IntMap qualified as IntMap ( fromList, adjust )
 
@@ -78,8 +78,8 @@ add u (k,z)
    | False = id  -- check raw materials
    | otherwise = IntMap.adjust (first (go z)) k
    where
-   go 0 (a:as) = a { unit = u {- , items = subtract recipe -} } : as
-   go i [] = replicate (fromIntegral i) Void <> [Atom { unit = u , items = mempty }]
+   go 0 (a:as) = a { unit = Just u {- , items = subtract recipe -} } : as
+   go i [] = replicate (fromIntegral i) void <> [Atom { unit = Just u , items = mempty , elements = mempty }]
    go i as = go (pred i) (tail as)
 
 del :: (Int,Word) -> Verse -> Verse
@@ -98,28 +98,44 @@ upd f (k,z) = IntMap.adjust (first (go z)) k
 
 -- Atom
 
-data Atom = Base | Void | Atom {
-   unit :: Unit ,
+data Atom = Atom {
+   unit :: Maybe Unit ,
    items :: Map Item Word ,
    elements :: Map Element Level }
    deriving Show
 
+void :: Atom
+void = Atom {
+   unit = Nothing ,
+   items = mempty ,
+   elements = mempty }
+
 -- atomic lenses
 
-building :: Atom -> Building
-building = (\(Unit b _ _) -> b) . unit
+building :: Atom -> Maybe Building
+building = fmap f . unit
+   where
+   f = \(Unit b _ _) -> b
 
-structure :: Atom -> Structure
-structure = (\(Building s _) -> s) . (\(Unit b _ _) -> b) . unit
+structure :: Atom -> Maybe Structure
+structure = fmap f . unit
+   where
+   f = (\(Building s _) -> s) . (\(Unit b _ _) -> b)
 
-material :: Atom -> Material
-material = (\(Building _ m) -> m) . (\(Unit b _ _) -> b) . unit
+material :: Atom -> Maybe Material
+material = fmap f . unit
+   where
+   f = (\(Building _ m) -> m) . (\(Unit b _ _) -> b)
 
-level :: Atom -> Level
-level = (\(Unit _ l _) -> l) . unit
+condition :: Atom -> Maybe Level
+condition = fmap f . unit
+   where
+   f = \(Unit _ l _) -> l
 
-properties :: Atom -> Set Property
-properties = (\(Unit _ _ ps) -> ps) . unit
+properties :: Atom -> Maybe (Set Property)
+properties = fmap f . unit
+   where
+   f = \(Unit _ _ p) -> p
 
 -- View is interface accessible information INDEPENDENT from Pixel rendering
 data View = View {
@@ -129,7 +145,7 @@ data View = View {
 
 base :: View
 base = View {
-   atom = Base ,
+   atom = void ,
    z = 0 }
 
 -- | Model
@@ -145,7 +161,7 @@ base = View {
 --    building_cost :: Word }
 
 data Element = Fire | Water | Light | Radio
-   deriving Show
+   deriving (Eq, Ord, Show)
 
 class Product a where
    recipe :: a -> Map Item Word

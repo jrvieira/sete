@@ -59,27 +59,26 @@ plane st = hcat [hex,ents,ui]
       targeted :: Bool = zlevel st == z v && IntSet.member n (targets st)
 
       chr :: Char
-         | Base  <- atom v             = '.'
-         | Void  <- atom v             = ' '
-         | Track <- structure (atom v) = '#'
-         | otherwise                   = '?'
+         | Nothing    <- structure (atom v) , z v       == 0 = '.'
+         | Nothing    <- structure (atom v)                  = ' '
+         | Just Track <- structure (atom v)                  = '#'
+         | otherwise                                         = '?'
 
       clr :: Draw
-         | targeted                    = color Red Dull
-         | selected                    = color Cyan Dull
-         | adjacent                    = color Cyan Vivid
+         | targeted                                         = color Red Dull
+         | selected                                         = color Cyan Dull
+         | adjacent                                         = color Cyan Vivid
 
-         | not (play st)               = rgbColor $ fog grey
-         | zlevel st /= z v            = rgbColor $ fog grey
+         | not (play st)                                    = rgbColor $ fog grey
+         | zlevel st /= z v                                 = rgbColor $ fog grey
 
-         | Base  <- atom v              = color Yellow Dull
-         | Void  <- atom v              = color White Dull
-         | Dirt  <- material (atom v)   = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
-         | Wood  <- material (atom v)   = rgbColor $ fog $ sRGB24 0x60 0x30 0x00
-         | Stone <- material (atom v)   = rgbColor $ fog $ sRGB24 0x16 0x16 0x16
-         | Metal <- material (atom v)   = rgbColor $ fog $ sRGB24 0x30 0x30 0x60
+         | Nothing    <- material (atom v)                  = rgbColor $ fog grey
+         | Just Dirt  <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
+         | Just Wood  <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x60 0x30 0x00
+         | Just Stone <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x16 0x16 0x16
+         | Just Metal <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x30 0x30 0x60
 
-         | otherwise                   = color White Dull
+         | otherwise                                        = color White Dull
 
       fog :: Colour Float -> Colour Float
       fog = fade (zlevel st - z v)
