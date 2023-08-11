@@ -72,6 +72,16 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
       | 't' <- k             = st { targets = if IntSet.member (focus st) (targets st) then IntSet.delete (focus st) (targets st) else IntSet.insert (focus st) (targets st) }
       | 'T' <- k             = st { targets = mempty }
 
+      -- manipulation
+
+      | ']' <- k             = st { q_structure = next (q_structure st) }
+      | '[' <- k             = st { q_structure = prev (q_structure st) }
+  --  | '}' <- k             = st { q_material = next (q_material st) }
+  --  | '{' <- k             = st { q_material = prev (q_material st) }
+
+  --  | 'q' <- k             = st { ν = add (q_structure st) (focus st,zlevel st) (ν st) }
+  --  | 'Q' <- k             = st { ν = del                  (focus st,zlevel st) (ν st) }
+
       -- none
 
       | otherwise            = st

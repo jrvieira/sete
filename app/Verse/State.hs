@@ -7,12 +7,13 @@ import Data.IntMap ( IntMap )
 import Data.IntSet ( IntSet )
 
 data State = Σ {
-   ν :: IntMap (Node [Atom]) ,
+   ν :: Verse ,
    play :: Bool ,
    input :: Char ,
    center :: Int ,
    focus :: Int ,
    targets :: IntSet ,
+   q_structure :: Structure ,
    layer :: Layer ,
    zlevel :: Word ,
    view :: IntMap View }
@@ -25,6 +26,7 @@ state = Σ {
    center = 0 ,
    focus = 0 ,
    targets = mempty ,
+   q_structure = toEnum 0 ,
    layer = Surface ,
    zlevel = Setup.zlevel ,
    view = mempty }
