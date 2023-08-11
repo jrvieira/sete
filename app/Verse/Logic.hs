@@ -55,6 +55,8 @@ step st
          -- transfer function for items (both to/from neighbours and vertically)
          --                                   ^^^^^^^ think about this
 
+         -- bridge atoms have to be either supported themselves by bottom atom or have a supported neighbour
+
          -- implement gravity physics (fall and climb)
 
          -- This needs some work
