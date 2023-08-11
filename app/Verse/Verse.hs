@@ -151,12 +151,6 @@ base = View {
 
 -- | Model
 
--- q_dict :: Map String Q
--- q_dict = Map.fromList [
---    ("book",Building)
---    ]
-
-
 -- Meta
 
 data Layer = Surface | Inspect | Numeric | Density
@@ -183,7 +177,7 @@ data Element = Fire | Water | Light | Radio
 data Form = Gas | Liquid | Solid | Plasma
 
 data Property = Perms | Burns | Float | Fixed | Holds | Block | Toxic | Fatal
-   deriving Show
+   deriving (Eq, Ord, Show)
 -- perms :: a -> Bool  -- lets water through
 -- burns :: a -> Bool  -- flammable
 -- float :: a -> Bool  -- floats above water
@@ -207,7 +201,7 @@ data Entity = Cat | Bird
 data Material = Dirt | Wood | Stone | Metal
    deriving ( Eq, Enum, Bounded, Ord, Show )
 
-data Structure = Wall | Track | Bridge | Table | Art
+data Structure = Wall | Track | Bridge | Table | Art | House
    deriving ( Eq, Enum, Bounded, Show )
 
 data Building = Building Structure Material
