@@ -140,7 +140,7 @@ properties = fmap f . unit
 -- View is interface accessible information INDEPENDENT from Pixel rendering
 data View = View {
    atom :: Atom ,
-   z :: Level }
+   z :: Word }
    deriving ( Show )
 
 base :: View

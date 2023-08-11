@@ -1,7 +1,5 @@
 module Verse.Logic where
 
-import Zero
-
 import Verse.State
 import Verse.Verse
 
@@ -23,14 +21,14 @@ step st
    sim k (as,es) = bimap (insert k v) (insert k (as',es))
       where
 
-      (v,as') = go as e L0 base
+      (v,as') = go as e 0 base
 
       e = (<> repeat void) . fst . (ν st IntMap.!) <$> es
 
       -- each Node stores a vertical list of atoms and Edge, a set of pointers to adjacent nodes
       -- each list of Atoms is traversed from bottom to top, the traversal is synced between all 7 nodes
       -- each Atom updates by looking (only looking) at its neighbours and the next
-      go :: [Atom] -> Edge [Atom] -> Level -> View -> (View,[Atom])
+      go :: [Atom] -> Edge [Atom] -> Word -> View -> (View,[Atom])
       go [] _ _ v' = (v',[])
       go (a:as) e' z v' = (v''',a':as')
          where
@@ -43,11 +41,11 @@ step st
          Edge (u:us) (i:is) (h:hs) (l:ls) (n:ns) (m:ms) = e'
          e = Edge u i h l n m
 
-         (v''',as') = go as (Edge us is hs ls ns ms) (next z) v''
+         (v''',as') = go as (Edge us is hs ls ns ms) (succ z) v''
 
          v'' :: View
          v''
-            | zlevel st > 7 || fromIntegral (zlevel st) > fromEnum z = v'
+            | zlevel st > z = v'
             | otherwise = v' {
                atom = a ,
                z = z }
