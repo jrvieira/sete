@@ -1,6 +1,6 @@
 module Main where
 
-import Zero ( next, prev )
+import Zero ( next, prev, forw, back )
 
 import Verse.State
 import Verse.Verse
@@ -74,10 +74,10 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
 
       -- manipulation
 
-      | ']' <- k             = st { q_structure = next (q_structure st) }
-      | '[' <- k             = st { q_structure = prev (q_structure st) }
-      | '}' <- k             = st { q_material = next (q_material st) }
-      | '{' <- k             = st { q_material = prev (q_material st) }
+      | ']' <- k             = st { q_structure = forw (q_structure st) }
+      | '[' <- k             = st { q_structure = back (q_structure st) }
+      | '}' <- k             = st { q_material = forw (q_material st) }
+      | '{' <- k             = st { q_material = back (q_material st) }
 
   --  | 'q' <- k             = st { ν = add (q st) (focus st,zlevel st) (ν st) }
   --  | 'Q' <- k             = st { ν = del        (focus st,zlevel st) (ν st) }
