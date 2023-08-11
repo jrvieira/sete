@@ -4,6 +4,7 @@ import Zero ( total )
 
 import Verse.Setup qualified as Setup ( radius, width, height )
 
+import Data.Char ( toLower )
 import Data.Tuple ( swap )
 import Data.Bifunctor ( first )
 import Data.Set ( Set )
@@ -150,98 +151,11 @@ base = View {
 
 -- | Model
 
--- buildings_list :: Map String Unit
--- buildings_list = Map.fromList [
+-- q_dict :: Map String Q
+-- q_dict = Map.fromList [
 --    ("book",Building)
 --    ]
---
--- data Building = Building {
---    building_unit :: Unit ,
---    building_material :: Material ,
---    building_cost :: Word }
 
-data Element = Fire | Water | Light | Radio
-   deriving (Eq, Ord, Show)
-
-class Product a where
-   recipe :: a -> Map Item Word
-
--- Atoms have units
--- Units have buildings
--- Buildings have structures
---
--- getter through the Atom, always
-
-data Material = Dirt | Wood | Stone | Metal
-   deriving ( Eq, Ord, Show )
-
-data Structure = Wall | Track | Sculpture
-   deriving ( Eq, Enum, Bounded, Show )
-
-data Building = Building Structure Material
-   deriving Show
-
--- L0 is completely broken
--- properties dictate atom behaviour (holds, block, ...)
-data Unit = Unit Building Level (Set Property)
-   deriving Show
-
-instance Product Building where
-
-   recipe (Building Wall Dirt)       = Map.fromList []
-   recipe (Building Wall Wood)       = Map.fromList []
-   recipe (Building Wall Stone)      = Map.fromList []
-   recipe (Building Wall Metal)      = Map.fromList []
-
-   recipe (Building Track Dirt)      = Map.fromList []
-   recipe (Building Track Wood)      = Map.fromList []
-   recipe (Building Track Stone)     = Map.fromList []
-   recipe (Building Track Metal)     = Map.fromList []
-
-   recipe (Building Sculpture Dirt)  = Map.fromList []
-   recipe (Building Sculpture Wood)  = Map.fromList []
-   recipe (Building Sculpture Stone) = Map.fromList []
-   recipe (Building Sculpture Metal) = Map.fromList []
-
-   recipe _                          = Map.fromList []
-
--- Items can be transfered around
-data Item = Raw Material | Box | Book | Paper
-   deriving ( Eq, Ord, Show )
-
-instance Product Item where
-
-   recipe (Raw Dirt)       = Map.fromList []
-   recipe (Raw Wood)       = Map.fromList []
-   recipe (Raw Stone)      = Map.fromList []
-   recipe (Raw Metal)      = Map.fromList []
-
-   recipe Paper            = Map.fromList [(Raw Wood,1)]
-   recipe Box              = Map.fromList []
-   recipe Book             = Map.fromList [(Raw Wood,1),(Paper,1)]
-
-   recipe _                = Map.fromList []
-
--- Entities live in a IntMap [Entity] that is calculated after
-data Entity = Cat | Bird
-   deriving Show
-
-data Form = Gas | Liquid | Solid | Plasma
-
-data Property = Perms | Burns | Float | Fixed | Holds | Block | Toxic | Fatal
-   deriving Show
-
--- class Object a where
---
---    perms :: a -> Bool  -- lets water through
---    burns :: a -> Bool  -- flammable
---    float :: a -> Bool  -- floats above water
---
---    fixed :: a -> Bool  -- does not fall when unsupported
---    holds :: a -> Bool  -- supports top stuff (if not gets destroyed under weight)
---    block :: a -> Bool  -- blocks things from passing
---    toxic :: a -> Bool  -- harms life
---    fatal :: a -> Bool  -- kills life
 
 -- Meta
 
@@ -262,3 +176,105 @@ instance Num Level where
 -- instance Random Level where
 --    random g = let (r,g') = randomR (0,7) g in (toEnum r , g')
 --    randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
+
+data Element = Fire | Water | Light | Radio
+   deriving (Eq, Ord, Show)
+
+data Form = Gas | Liquid | Solid | Plasma
+
+data Property = Perms | Burns | Float | Fixed | Holds | Block | Toxic | Fatal
+   deriving Show
+-- perms :: a -> Bool  -- lets water through
+-- burns :: a -> Bool  -- flammable
+-- float :: a -> Bool  -- floats above water
+--
+-- fixed :: a -> Bool  -- does not fall when unsupported
+-- holds :: a -> Bool  -- supports top stuff (if not gets destroyed under weight)
+-- block :: a -> Bool  -- blocks things from passing
+-- toxic :: a -> Bool  -- harms life
+-- fatal :: a -> Bool  -- kills life
+
+-- Entities live in a IntMap [Entity] that is calculated after
+data Entity = Cat | Bird
+   deriving Show
+
+-- Atoms have units
+-- Units have buildings
+-- Buildings have structures
+--
+-- getter through the Atom, always (see: atomic lenses)
+
+data Material = Dirt | Wood | Stone | Metal
+   deriving ( Eq, Enum, Bounded, Ord, Show )
+
+data Structure = Wall | Track | Bridge | Table | Art
+   deriving ( Eq, Enum, Bounded, Show )
+
+data Building = Building Structure Material
+   deriving Show
+
+-- L0 is completely broken
+-- properties dictate atom behaviour (holds, block, ...)
+data Unit = Unit Building Level (Set Property)
+   deriving Show
+
+-- Items can be transfered around
+data Item = Raw Material | Box | Book | Paper
+   deriving ( Eq, Ord, Show )
+
+-- Products
+
+class Product a where
+   string :: a -> String
+   detail :: a -> String
+   recipe :: a -> Map Item Word
+
+instance Product Building where
+
+
+   string (Building Art Dirt)        = "sand castle"
+   string (Building Art Metal)       = "copper statue"
+   string (Building Art Stone)       = "stone statue"
+   string (Building Art Wood)        = "decorative table"
+   string (Building Track Metal)     = "railroad track"
+   string (Building Track Wood)      = "wooden floor"
+   string (Building b m)             = toLower <$> unwords [show m,show b]
+
+   detail (Building Track Metal)     = "state of the art reinforced steel track"
+   detail (Building Track Stone)     = "exquisite marble tiled floor"
+   detail (Building Track Wood)      = "here you step on wood planks"
+   detail (Building b m)             = toLower <$> unwords ["just a",show m,show b]
+
+   recipe (Building Art Dirt)        = Map.fromList []
+   recipe (Building Art Metal)       = Map.fromList []
+   recipe (Building Art Stone)       = Map.fromList []
+   recipe (Building Art Wood)        = Map.fromList []
+   recipe (Building Bridge Dirt)     = Map.fromList []
+   recipe (Building Bridge Metal)    = Map.fromList []
+   recipe (Building Bridge Stone)    = Map.fromList []
+   recipe (Building Bridge Wood)     = Map.fromList []
+   recipe (Building Table Dirt)      = Map.fromList []
+   recipe (Building Table Metal)     = Map.fromList []
+   recipe (Building Table Stone)     = Map.fromList []
+   recipe (Building Table Wood)      = Map.fromList []
+   recipe (Building Track m)         = Map.fromList [(Raw m,10)]
+   recipe (Building Wall m)          = Map.fromList [(Raw m,70)]
+   recipe _                          = Map.fromList []
+
+instance Product Item where
+
+   string (Raw m)                    = toLower <$> show m
+   string Paper                      = "stack of paper"
+   string i                          = toLower <$> show i
+
+   detail i                          = unwords ["just one",string i]
+
+   recipe (Raw Dirt)                 = Map.fromList []
+   recipe (Raw Metal)                = Map.fromList []
+   recipe (Raw Stone)                = Map.fromList []
+   recipe (Raw Wood)                 = Map.fromList []
+   recipe Book                       = Map.fromList [(Raw Wood,1),(Paper,1)]
+   recipe Box                        = Map.fromList []
+   recipe Paper                      = Map.fromList [(Raw Wood,1)]
+   recipe _                          = Map.fromList []
+

@@ -51,7 +51,11 @@ step st
                z = z }
 
          -- TODO:
-         -- implement gravity physics fall
+
+         -- transfer function for items (both to/from neighbours and vertically)
+         --                                   ^^^^^^^ think about this
+
+         -- implement gravity physics (fall and climb)
 
          -- This needs some work
          a' :: Atom
@@ -62,8 +66,10 @@ step st
          -- TODO:
          -- water physics
 
+         -- view layer for Entities
+
          -- while Units are manipulated directly by the user
-         -- Items are manipulated ONLY by automated Units
+         -- Items are manipulated ONLY by automated Units and (automated or user controlled) Entities
 
          -- fire spreads like water (when an atom reaches L7 it "spews" to flammable neighbours)
          -- radio waves spread on L1

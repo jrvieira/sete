@@ -14,6 +14,7 @@ data State = Σ {
    focus :: Int ,
    targets :: IntSet ,
    q_structure :: Structure ,
+   q_material :: Material ,
    layer :: Layer ,
    zlevel :: Word ,
    view :: IntMap View }
@@ -27,6 +28,7 @@ state = Σ {
    focus = 0 ,
    targets = mempty ,
    q_structure = toEnum 0 ,
+   q_material = toEnum 0 ,
    layer = Surface ,
    zlevel = Setup.zlevel ,
    view = mempty }

@@ -91,10 +91,10 @@ plane st = hcat [hex,ents,ui]
    -- | UI rendering
 
    info :: Plane
-   info = word $ unwords [show (zlevel st),show (focus st)]
+   info = word $ unwords [show (zlevel st),show (focus st),show (q_structure st)]
 
    ui :: Plane
-   ui = word $ show f
+   ui = word $ unlines [maybe "" id $ string <$> building (atom f)]
 
 -- | Assumed terminal background color
 
