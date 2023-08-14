@@ -10,9 +10,7 @@ import Data.IntMap qualified as IntMap
 -- | One tick
 
 step :: State -> State
-step st
-   | play st = st { ν = ν' , view = view' }
-   | otherwise = st
+step st = st { ν = ν' , view = view' }
    where
 
    (view',ν') = foldrWithKey sim (mempty,mempty) (ν st)
@@ -35,7 +33,7 @@ step st
 
          aa :: Atom
          aa
-            | (x:_) <- as = x
+            | x:_ <- as = x
             | otherwise = void
 
          Edge (u:us) (i:is) (h:hs) (l:ls) (n:ns) (m:ms) = e'
@@ -45,10 +43,14 @@ step st
 
          v'' :: View
          v''
-            | zlevel st > z = v'
-            | otherwise = v' {
-               atom = a ,
-               z = z }
+            | z > zlevel st = v'
+            | z == zlevel st = v' { atom = a , top = top' }
+            | Nothing <- building a = v'
+            | otherwise = v' { top = top' }
+            where
+            top'
+               | visible a = (z,a)
+               | otherwise = top v'
 
          -- TODO:
 
@@ -62,7 +64,7 @@ step st
          -- This needs some work
          a' :: Atom
          a'
-            | Atom { } <- a = a
+            | play st = a  -- update things
             | otherwise = a
 
          -- TODO:

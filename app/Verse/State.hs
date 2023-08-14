@@ -34,3 +34,4 @@ state = Σ {
    view = mempty }
    where
    seed = verse []
+

@@ -3,7 +3,7 @@ module Verse.Setup where
 -- plane
 
 radius :: Int
-radius = 11
+radius = 7
 
 width :: Int
 width = 3 * radius

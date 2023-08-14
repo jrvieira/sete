@@ -46,6 +46,8 @@ plane st = hcat [hex,ents,ui]
       v :: View
       v = maybe base id $ view st IntMap.!? n
 
+      (tz,ta) = top v
+
       -- get index of node taking scroll into account
       n = move mx L . move my I $ coordToIndex (mod (x - div y Setup.height * Setup.radius) Setup.width , mod y Setup.height)
          where
@@ -54,34 +56,26 @@ plane st = hcat [hex,ents,ui]
       -- stretch, tilt, Setup.margin, translate to Terminal.Game coordinate system (1-based (y,x))
       c = join bimap succ (y + Setup.radius + Setup.marginY , 2 * (x + Setup.radius + Setup.marginX) + y)
 
-      selected :: Bool = zlevel st == z v && n == focus st
-      adjacent :: Bool = zlevel st == z v && n ∈ fis
-      targeted :: Bool = zlevel st == z v && IntSet.member n (targets st)
+      selected :: Bool = zlevel st == tz && n == focus st
+      adjacent :: Bool = zlevel st == tz && n ∈ fis
+      targeted :: Bool = IntSet.member n (targets st)
 
       chr :: Char
-         | Nothing    <- structure (atom v) , z v       == 0 = '.'
-         | Nothing    <- structure (atom v)                  = ' '
-         | Just Track <- structure (atom v)                  = '#'
-         | otherwise                                         = '?'
+      chr = atom_chr ta
 
       clr :: Draw
-         | targeted                                         = color Red Dull
-         | selected                                         = color Cyan Dull
-         | adjacent                                         = color Cyan Vivid
 
-         | not (play st)                                    = rgbColor $ fog grey
-         | zlevel st /= z v                                 = rgbColor $ fog grey
+         | targeted        = rgbColor $ sRGB24 0xff 0xff 0xff
+         | selected        = rgbColor $ sRGB24 0xff 0xff 0xff
+         | adjacent        = rgbColor $ mix 1 (sRGB24 0xff 0xff 0xff) $ atom_clr $ atom v
 
-         | Nothing    <- material (atom v)                  = rgbColor $ fog grey
-         | Just Dirt  <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x30 0x10 0x00
-         | Just Wood  <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x60 0x30 0x00
-         | Just Stone <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x16 0x16 0x16
-         | Just Metal <- material (atom v)                  = rgbColor $ fog $ sRGB24 0x30 0x30 0x60
+         | not (play st)   = rgbColor $ fog $ grey
+         | zlevel st /= tz = rgbColor $ fog $ grey
 
-         | otherwise                                        = color White Dull
+         | otherwise       = rgbColor $ fog $ atom_clr $ atom v
 
       fog :: Colour Float -> Colour Float
-      fog = fade (zlevel st - z v)
+      fog = fade (zlevel st - tz)
 
    -- | Entities
 
@@ -91,17 +85,22 @@ plane st = hcat [hex,ents,ui]
    -- | UI rendering
 
    info :: Plane
-   info = word $ unwords [show (zlevel st),show (focus st),string $ Building (q_structure st) (q_material st)]
+   info = word $ unwords [
+   -- show (zlevel st,tz) ,
+   -- show tz ,
+   -- show (focus st) ,
+   -- string $ Building (q_structure st) (q_material st) ,
+      show $ zlevel st ,
+      show $ structure $ atom $ maybe base id $ view st IntMap.!? (focus st) ,
+      "|" ,
+      maybe "" string $ building $ atom f ]
 
    ui :: Plane
-   ui = word $ unlines [maybe "" id $ string <$> building (atom f)]
+   ui = word $ "<ui>"
 
 -- | Assumed terminal background color
-
 termBG :: Colour Float
-termBG = sRGB24 0x22 0x22 0x22
-
--- | Useful grey tone
+termBG = sRGB24 0x22 0x22 0x22 -- | Useful grey tone
 
 grey :: Colour Float
 grey = blend 0.1 (sRGB24 0xff 0xff 0xff) termBG
@@ -116,3 +115,24 @@ mix l ka kb = (grade <$> steps) !! fromEnum l
    where
    grade x = blend x ka kb
    steps = [0,0.25..1] <> repeat 1
+
+-- | Atoms
+
+atom_chr :: Atom -> Char
+atom_chr a
+
+   | Nothing    <- structure a = ' '
+   | Just Path  <- structure a = '.'
+   | Just Track <- structure a = '#'
+   | otherwise                 = '?'
+
+atom_clr :: Atom -> Colour Float
+atom_clr a
+
+   | Nothing    <- material a = grey
+   | Just Dirt  <- material a = sRGB24 0x30 0x10 0x00
+   | Just Wood  <- material a = sRGB24 0x60 0x30 0x00
+   | Just Stone <- material a = sRGB24 0x16 0x16 0x16
+   | Just Metal <- material a = sRGB24 0x30 0x30 0x60
+   | otherwise                = sRGB24 0x00 0x30 0x30
+

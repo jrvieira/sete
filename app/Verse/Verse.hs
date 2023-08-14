@@ -74,28 +74,24 @@ move n d i
 -- each unit should have a material cost
 -- n of that material should be present in the Atom (do a items check)
 -- build if possible, don't if not
-add :: Unit -> (Int,Word) -> Verse -> Verse
-add u (k,z)
+add :: Unit -> Int -> Word -> Verse -> Verse
+add u k z
    | False = id  -- check raw materials
-   | otherwise = IntMap.adjust (first (go z)) k
+   | otherwise = IntMap.adjust (first $ go z) k
    where
    go 0 (a:as) = a { unit = Just u {- , items = subtract recipe -} } : as
    go i [] = replicate (fromIntegral i) void <> [Atom { unit = Just u , items = mempty , elements = mempty }]
-   go i as = go (pred i) (tail as)
+   go i (a:as) = a : go (pred i) as
 
-del :: (Int,Word) -> Verse -> Verse
-del (k,z) = IntMap.adjust (first (go z)) k
+del :: Int -> Word -> Verse -> Verse
+del k z = IntMap.adjust (first $ go z) k
    where
-   go 0 (_:as) = as
    go _ [] = []
-   go i as = go (pred i) (tail as)
+   go 0 (_:as) = void : as
+   go i (_:as) = go (pred i) as
 
-upd :: (Atom -> Atom) -> (Int,Word) -> Verse -> Verse
-upd f (k,z) = IntMap.adjust (first (go z)) k
-   where
-   go 0 (a:as) = f a : as
-   go _ [] = []
-   go i as = go (pred i) (tail as)
+upd :: (Atom -> Atom) -> Int -> Word -> Verse -> Verse
+upd f k z = undefined
 
 -- Atom
 
@@ -141,13 +137,21 @@ properties = fmap f . unit
 -- View is interface accessible information INDEPENDENT from Pixel rendering
 data View = View {
    atom :: Atom ,
-   z :: Word }
+   top :: (Word,Atom) }
    deriving ( Show )
 
 base :: View
 base = View {
-   atom = void ,
-   z = 0 }
+   atom = ba ,
+   top = (0,ba) }
+   where
+   ba = void { unit = Just $ Unit (Building Path Dirt) L0 mempty }
+
+
+visible :: Atom -> Bool
+visible a
+   | Nothing <- unit a = False
+   | otherwise = True
 
 -- | Model
 
@@ -201,7 +205,7 @@ data Entity = Cat | Bird
 data Material = Dirt | Wood | Stone | Metal
    deriving ( Eq, Enum, Bounded, Ord, Show )
 
-data Structure = Wall | Track | Bridge | Table | Art | House
+data Structure = Path | Wall | Track | Bridge | Table | Art | House
    deriving ( Eq, Enum, Bounded, Show )
 
 data Building = Building Structure Material
@@ -219,12 +223,12 @@ data Item = Raw Material | Box | Book | Paper
 -- Products
 
 class Product a where
+
    string :: a -> String
    detail :: a -> String
    recipe :: a -> Map Item Word
 
 instance Product Building where
-
 
    string (Building Art Dirt)        = "sand castle"
    string (Building Art Metal)       = "copper statue"

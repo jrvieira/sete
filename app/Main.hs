@@ -76,11 +76,11 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
 
       | ']' <- k             = st { q_structure = forw (q_structure st) }
       | '[' <- k             = st { q_structure = back (q_structure st) }
-      | '}' <- k             = st { q_material = forw (q_material st) }
-      | '{' <- k             = st { q_material = back (q_material st) }
+      | '}' <- k             = st { q_material  = forw (q_material st) }
+      | '{' <- k             = st { q_material  = back (q_material st) }
 
-      | 'q' <- k             = st { ν = add (Unit (Building (q_structure st) (q_material st)) L7 mempty) (focus st,zlevel st) (ν st) }
-      | 'Q' <- k             = st { ν = del                                                              (focus st,zlevel st) (ν st) }
+      | 'q' <- k             = st { ν = add (Unit (Building (q_structure st) (q_material st)) L7 mempty) (focus st) (zlevel st) (ν st) }
+      | 'Q' <- k             = st { ν = del                                                              (focus st) (zlevel st) (ν st) }
 
       -- none
 
