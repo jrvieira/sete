@@ -15,8 +15,8 @@ import Data.Bifunctor ( bimap )
 import Control.Monad ( join )
 
 plane :: State -> Plane
-plane st = hcat [hex,ents,ui]
-   & (1,1) % makeTransparent ' ' info
+plane st = hcat [hex,ui]
+   & (1,1) % info
 
    where
 
@@ -77,10 +77,10 @@ plane st = hcat [hex,ents,ui]
       fog :: Colour Float -> Colour Float
       fog = fade (zlevel st - tz)
 
-   -- | Entities
+   -- | Entities  ( todo )
 
    ents :: Plane
-   ents = word []
+   ents = word "<ents>"
 
    -- | UI rendering
 
@@ -96,7 +96,15 @@ plane st = hcat [hex,ents,ui]
       maybe "" string $ building $ atom f ]
 
    ui :: Plane
-   ui = word $ "<ui>"
+   ui = canvas
+      & (1,1) % vcat
+         [ word (pure $ atom_chr (atom f)) # rgbColor (atom_clr (atom f))
+         , word $ unlines [maybe "" id $ string <$> building (atom f)]
+         , word (unwords ["zlevel st: ",show $ zlevel st])
+         , word (unwords ["z view fi:",show $ z $ maybe base id $ view st IntMap.!? fi])
+         , word ""
+         , textBoxLiquid Setup.width (show $ maybe base id $ view st IntMap.!? fi)
+         ]
 
 -- | Assumed terminal background color
 termBG :: Colour Float
@@ -111,7 +119,7 @@ fade :: Word -> Colour Float -> Colour Float
 fade l k = mix l termBG k
 
 mix :: Word -> Colour Float -> Colour Float -> Colour Float
-mix l ka kb = (grade <$> steps) !! fromEnum l
+mix l ka kb = (grade <$> steps) !! fromEnum l  -- (max 0 l)
    where
    grade x = blend x ka kb
    steps = [0,0.25..1] <> repeat 1

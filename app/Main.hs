@@ -35,54 +35,55 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
 
       -- play / pause
 
-      | 'p' <- k             = st { play = not $ play st }
-      | 'P' <- k             = (step st { play = True }) { play = False }
+      | 'p' <- k                                         = st { play = not $ play st }
+      | 'P' <- k                                         = (step st { play = True }) { play = False }
 
       -- movement
 
-      | 'h' <- k             = st { focus = move 1 H (focus st) }
-      | 'j' <- k             = st { focus = move 1 N (focus st) }
-      | 'k' <- k             = st { focus = move 1 I (focus st) }
-      | 'l' <- k             = st { focus = move 1 L (focus st) }
-      | 'u' <- k             = st { focus = move 1 U (focus st) }
-      | 'i' <- k             = st { focus = move 1 I (focus st) }
-      | 'n' <- k             = st { focus = move 1 N (focus st) }
-      | 'm' <- k             = st { focus = move 1 M (focus st) }
-      | 'c' <- k             = st { focus = center st }  -- focus on center
+      | 'h' <- k                                         = st { focus = move 1 H (focus st) }
+      | 'j' <- k                                         = st { focus = move 1 N (focus st) }
+      | 'k' <- k                                         = st { focus = move 1 I (focus st) }
+      | 'l' <- k                                         = st { focus = move 1 L (focus st) }
+      | 'u' <- k                                         = st { focus = move 1 U (focus st) }
+      | 'i' <- k                                         = st { focus = move 1 I (focus st) }
+      | 'n' <- k                                         = st { focus = move 1 N (focus st) }
+      | 'm' <- k                                         = st { focus = move 1 M (focus st) }
+      | 'c' <- k                                         = st { focus = center st }  -- focus on center
 
       -- scroll
 
-      | 'C' <- k             = st { center = focus st }  -- center on focus
-      | 'H' <- k             = st { center = move 1 H (center st) , focus = move 1 H (focus st) }
-      | 'J' <- k             = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
-      | 'K' <- k             = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
-      | 'L' <- k             = st { center = move 1 L (center st) , focus = move 1 L (focus st) }
-      | 'U' <- k             = st { center = move 1 U (center st) , focus = move 1 U (focus st) }
-      | 'I' <- k             = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
-      | 'N' <- k             = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
-      | 'M' <- k             = st { center = move 1 M (center st) , focus = move 1 M (focus st) }
+      | 'C' <- k                                         = st { center = focus st }  -- center on focus
+      | 'H' <- k                                         = st { center = move 1 H (center st) , focus = move 1 H (focus st) }
+      | 'J' <- k                                         = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
+      | 'K' <- k                                         = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
+      | 'L' <- k                                         = st { center = move 1 L (center st) , focus = move 1 L (focus st) }
+      | 'U' <- k                                         = st { center = move 1 U (center st) , focus = move 1 U (focus st) }
+      | 'I' <- k                                         = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
+      | 'N' <- k                                         = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
+      | 'M' <- k                                         = st { center = move 1 M (center st) , focus = move 1 M (focus st) }
 
       -- z level
 
-      | '>' <- k             = st { zlevel = next (zlevel st) }
-      | '<' <- k             = st { zlevel = prev (zlevel st) }
+      | '>' <- k                                         = st { zlevel = next (zlevel st) }
+      | '<' <- k                                         = st { zlevel = prev (zlevel st) }
 
       -- target
 
-      | 't' <- k             = st { targets = if IntSet.member (focus st) (targets st) then IntSet.delete (focus st) (targets st) else IntSet.insert (focus st) (targets st) }
-      | 'T' <- k             = st { targets = mempty }
+      | 't' <- k , IntSet.member (focus st) (targets st) = st { targets = IntSet.delete (focus st) (targets st) }
+      | 't' <- k                                         = st { targets = IntSet.insert (focus st) (targets st) }
+      | 'T' <- k                                         = st { targets = mempty }
 
       -- manipulation
 
-      | ']' <- k             = st { q_structure = forw (q_structure st) }
-      | '[' <- k             = st { q_structure = back (q_structure st) }
-      | '}' <- k             = st { q_material  = forw (q_material st) }
-      | '{' <- k             = st { q_material  = back (q_material st) }
+      | ']' <- k                                         = st { q_structure = forw (q_structure st) }
+      | '[' <- k                                         = st { q_structure = back (q_structure st) }
+      | '}' <- k                                         = st { q_material  = forw (q_material st) }
+      | '{' <- k                                         = st { q_material  = back (q_material st) }
 
-      | 'q' <- k             = st { ν = add (Unit (Building (q_structure st) (q_material st)) L7 mempty) (focus st) (zlevel st) (ν st) }
-      | 'Q' <- k             = st { ν = del                                                              (focus st) (zlevel st) (ν st) }
+      | 'q' <- k                                         = st { ν = add (Unit (Building (q_structure st) (q_material st)) L7 mempty) (focus st) (zlevel st) (ν st) }
+      | 'Q' <- k                                         = st { ν = del                                                              (focus st) (zlevel st) (ν st) }
 
       -- none
 
-      | otherwise            = st
+      | otherwise                                        = st
 
