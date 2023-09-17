@@ -9,6 +9,7 @@ import Data.IntSet ( IntSet )
 data State = Σ {
    ν :: Verse ,
    play :: Bool ,
+   edit :: Bool ,
    input :: Char ,
    center :: Int ,
    focus :: Int ,
@@ -23,6 +24,7 @@ state :: State
 state = Σ {
    ν = seed ,
    play = False ,
+   edit = True ,
    input = 'p' ,
    center = 0 ,
    focus = 0 ,

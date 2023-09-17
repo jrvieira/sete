@@ -13,74 +13,82 @@ step :: State -> State
 step st = st { ν = ν' , view = view' }
    where
 
-   (view',ν') = foldrWithKey sim (mempty,mempty) (ν st)
+   -- type Node a = (a,Edge Int)
+   -- type Verse = IntMap (Node [Atom])
+   -- ν st :: Verse
+
+   -- run the simulation through each Node accumulating all Views and Nodes
+   (view',ν') :: (IntMap View,IntMap (Node [Atom]))
+      = foldrWithKey sim (mempty,mempty) (ν st)
 
    sim :: Int -> Node [Atom] -> (IntMap View,Verse) -> (IntMap View,Verse)
-   sim k (as,es) = bimap (insert k v) (insert k (as',es))
+   sim k (as,e) = bimap (insert k v) (insert k (as',e))
       where
 
-      (v,as') = go as e 0 base
+      (v,as') :: (View,[Atom])
+         = go base 0 as es
 
-      e = (<> repeat void) . fst . (ν st IntMap.!) <$> es
+      -- atoms of edges
+      es :: Edge [Atom]
+         = fst . (ν st IntMap.!) <$> e
 
-      -- each Node stores a vertical list of atoms and Edge, a set of pointers to adjacent nodes
-      -- each list of Atoms is traversed from bottom to top, the traversal is synced between all 7 nodes
-      -- each Atom updates by looking (only looking) at its neighbours and the next
-      go :: [Atom] -> Edge [Atom] -> Word -> View -> (View,[Atom])
-      go [] _ _ v' = (v',[])
-      go (a:as) e' z v' = (v''',a':as')
+   -- each Node stores a vertical list of atoms and Edge (set of pointers to adjacent nodes)
+   -- each list of Atoms is traversed from bottom to top, the traversal is synced between all 7 nodes
+   -- each Atom updates by looking (and only looking) at its neighbours and the next
+   go :: View -> Word -> [Atom] -> Edge [Atom] -> (View,[Atom])
+   go v z [] _
+      | z <= zlevel st = (v,[])
+      | otherwise = (v,[])
+   go v z (a:as) es = (v'',a':as')
+      where
+
+      -- final view and updated rest of atoms
+      (v'',as') :: (View,[Atom])
+         = go v' (succ z) as (drop 1 <$> es)
+
+      -- add atom to View (which for now is just an IntMap of atoms)
+      v' :: View = v { atoms = insert (fromIntegral z) a (atoms v) }
+
+      -- This needs some work
+      -- updated atom
+      a' :: Atom
+         | play st = a  -- update things
+         | otherwise = a
+
+      adj :: Edge Atom
+         = f <$> es
          where
+         f [] = void
+         f (x:_) = x
 
-         aa :: Atom
-         aa
-            | x:_ <- as = x
-            | otherwise = void
+   -- next atom
+   -- aa :: Atom
+   --    | x:_ <- as = x
+   --    | otherwise = void
 
-         Edge (u:us) (i:is) (h:hs) (l:ls) (n:ns) (m:ms) = e'
-         e = Edge u i h l n m
+      -- TODO:
 
-         (v''',as') = go as (Edge us is hs ls ns ms) (succ z) v''
+      -- transfer function for items (both to/from neighbours and vertically)
+      --                                   ^^^^^^^ think about this
 
-         v'' :: View
-         v''
-            | z > zlevel st = v'
-            | z == zlevel st = v' { atom = a , top = top' }
-            | Nothing <- building a = v'
-            | otherwise = v' { top = top' }
-            where
-            top'
-               | visible a = (z,a)
-               | otherwise = top v'
+      -- bridge atoms have to be either supported themselves by bottom atom or have a supported neighbour
 
-         -- TODO:
+      -- implement gravity physics (fall and climb)
 
-         -- transfer function for items (both to/from neighbours and vertically)
-         --                                   ^^^^^^^ think about this
+      -- TODO:
+      -- water physics
 
-         -- bridge atoms have to be either supported themselves by bottom atom or have a supported neighbour
+      -- view layer for Entities
 
-         -- implement gravity physics (fall and climb)
+      -- while Units are manipulated directly by the user
+      -- Items are manipulated ONLY by automated Units and (automated or user controlled) Entities
 
-         -- This needs some work
-         a' :: Atom
-         a'
-            | play st = a  -- update things
-            | otherwise = a
+      -- fire spreads like water (when an atom reaches L7 it "spews" to flammable neighbours)
+      -- radio waves spread on L1
 
-         -- TODO:
-         -- water physics
-
-         -- view layer for Entities
-
-         -- while Units are manipulated directly by the user
-         -- Items are manipulated ONLY by automated Units and (automated or user controlled) Entities
-
-         -- fire spreads like water (when an atom reaches L7 it "spews" to flammable neighbours)
-         -- radio waves spread on L1
-
-         -- water spills to neighbours when it reaches 7:
-         -- 1 remains in center, all neighbours get 1
-         -- neighbours know this by "transfer" mechanism
-         -- water flows upwards when it cant flow down or sides
+      -- water spills to neighbours when it reaches 7:
+      -- 1 remains in center, all neighbours get 1
+      -- neighbours know this by "transfer" mechanism
+      -- water flows upwards when it cant flow down or sides
 
 

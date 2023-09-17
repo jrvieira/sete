@@ -8,9 +8,8 @@ import Data.Char ( toLower )
 import Data.Tuple ( swap )
 import Data.Bifunctor ( first )
 import Data.Set ( Set )
-import Data.Set qualified as Set ( fromList )
 import Data.Map.Strict ( Map )
-import Data.Map.Strict qualified as Map ( empty, fromList, filter, keys )
+import Data.Map.Strict qualified as Map ( fromList )
 import Data.IntMap ( IntMap )
 import Data.IntMap qualified as IntMap ( fromList, adjust )
 
@@ -86,9 +85,10 @@ add u k z
 del :: Int -> Word -> Verse -> Verse
 del k z = IntMap.adjust (first $ go z) k
    where
+   go :: Word -> [Atom] -> [Atom]
    go _ [] = []
    go 0 (_:as) = void : as
-   go i (_:as) = go (pred i) as
+   go i (a:as) = a : go (pred i) as
 
 upd :: (Atom -> Atom) -> Int -> Word -> Verse -> Verse
 upd f k z = undefined
@@ -99,7 +99,11 @@ data Atom = Atom {
    unit :: Maybe Unit ,
    items :: Map Item Word ,
    elements :: Map Element Level }
-   deriving Show
+   deriving ( Show, Eq )
+
+base :: View
+base = View {
+   atoms = mempty }
 
 void :: Atom
 void = Atom {
@@ -134,19 +138,10 @@ properties = fmap f . unit
    where
    f = \(Unit _ _ p) -> p
 
--- View is interface accessible information INDEPENDENT from Pixel rendering
+-- View is user interface accessible information INDEPENDENT from Pixel rendering
 data View = View {
-   atom :: Atom ,
-   top :: (Word,Atom) }
-   deriving ( Show )
-
-base :: View
-base = View {
-   atom = ba ,
-   top = (0,ba) }
-   where
-   ba = void { unit = Just $ Unit (Building Path Dirt) L0 mempty }
-
+   atoms :: IntMap Atom }
+   deriving ( Show, Eq )
 
 visible :: Atom -> Bool
 visible a
@@ -209,12 +204,12 @@ data Structure = Path | Wall | Track | Bridge | Table | Art | House
    deriving ( Eq, Enum, Bounded, Show )
 
 data Building = Building Structure Material
-   deriving Show
+   deriving ( Show, Eq )
 
 -- L0 is completely broken
 -- properties dictate atom behaviour (holds, block, ...)
 data Unit = Unit Building Level (Set Property)
-   deriving Show
+   deriving ( Show, Eq )
 
 -- Items can be transfered around
 data Item = Raw Material | Box | Book | Paper

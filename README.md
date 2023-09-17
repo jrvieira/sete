@@ -13,3 +13,5 @@ basic exagonal model
   - Logic : control interaction + step simualtion
   - Pixel : display art
 
+# bugs
+
