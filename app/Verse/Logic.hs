@@ -10,7 +10,7 @@ import Data.IntMap qualified as IntMap
 -- | One tick
 
 step :: State -> State
-step st = st { ν = ν' , view = view' }
+step st = st { δ = succ (δ st) , ν = ν' , view = view' }
    where
 
    -- type Node a = (a,Edge Int)

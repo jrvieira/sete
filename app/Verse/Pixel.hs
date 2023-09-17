@@ -92,15 +92,17 @@ plane st = hcat [hex,ui]
          | otherwise = ' '
 
       clr :: Draw
-         | edit st , targeted       = rgbColor white
-         | edit st , overvoid       = rgbColor white
-         |           viewbase       = rgbColor $ fog $ blend 0.05 white termBG
-         | edit st , selected       = rgbColor white
-         | edit st , adjacent       = rgbColor $ mix 1 white $ atom_clr ta
-         | edit st , zlevel st > tz = rgbColor $ fog $ grey
-      -- | zlevel st < tz           = error $ unwords ["view top z should never be > zlevel",show $ zlevel st,show tz]
-         | not (play st)            = rgbColor $ fog $ blend 0.7 grey white
-         | otherwise                = rgbColor $ fog $ atom_clr ta
+         | edit st , targeted = rgbColor $ blink white go
+         | otherwise = rgbColor go
+         where
+         go
+            | edit st , overvoid       = white
+            |           viewbase       = fog $ blend 0.05 white termBG
+            | edit st , selected       = white
+            | edit st , adjacent       = blend 0.5 white $ atom_clr ta
+            | edit st , zlevel st > tz = fog $ grey
+            | not (play st)            = fog $ blend 0.7 grey white
+            | otherwise                = fog $ atom_clr ta
 
       fog :: Colour Float -> Colour Float
       fog = fade (zlevel st - tz)
@@ -133,6 +135,14 @@ plane st = hcat [hex,ui]
          ]
       | otherwise = canvas
 
+   -- | Color animation
+
+   blink :: Colour Float -> Colour Float -> Colour Float
+   blink = blend (abs $ fromInteger (steps - x) / fromInteger steps)
+      where
+      steps = 9
+      x = mod (fromInteger $ δ st) (2 * steps)
+
 -- | Assumed terminal background color
 termBG :: Colour Float
 termBG = sRGB24 0x22 0x22 0x22 -- | Useful grey tone
@@ -146,13 +156,9 @@ grey = blend 0.1 white termBG
 -- | Color blending
 
 fade :: Word -> Colour Float -> Colour Float
-fade l k = mix l termBG k
-
-mix :: Word -> Colour Float -> Colour Float -> Colour Float
-mix l ka kb = (grade <$> steps) !! fromEnum l
+fade l k = (grade <$> steps) !! fromEnum l
    where
-   grade x = blend x ka kb
--- steps = [0,0.25,0.50,0.65,0.80,0.90,1] <> repeat 1
+   grade x = blend x termBG k
    steps = [0,0.50,0.80,0.95,1] <> repeat 1
 
 -- | Atoms
