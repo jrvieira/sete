@@ -142,8 +142,8 @@ plane st = hcat [hex,ui]
    blink :: Colour Float -> Colour Float -> Colour Float
    blink = blend (abs $ fromInteger (steps - x) / fromInteger steps)
       where
-      steps = 9
-      x = mod (fromInteger $ δ st) (2 * steps)
+      steps = 8
+      x = mod (fromIntegral $ δ st) (2 * steps)
 
 -- | Assumed terminal background color
 termBG :: Colour Float

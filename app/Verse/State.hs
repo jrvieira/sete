@@ -7,7 +7,7 @@ import Data.IntMap ( IntMap )
 import Data.IntSet ( IntSet )
 
 data State = Σ {
-   δ :: Integer ,
+   δ :: Word ,
    ν :: Verse ,
    play :: Bool ,
    edit :: Bool ,
