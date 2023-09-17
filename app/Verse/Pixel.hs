@@ -191,7 +191,7 @@ k2 = kd
 k_pointer :: Colour Float
 k_pointer = sRGB24 0x00 0xcc 0xff
 
-rose :: Colour Float = sRGB24 0xff 0x00 0x7f
+-- rose :: Colour Float = sRGB24 0xff 0x00 0x7f
 
 data Palette = K8
    { white :: Colour Float
