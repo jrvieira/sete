@@ -43,7 +43,7 @@ plane st = hcat [hex,ui]
    hex = foldl (&) canvas $ map pixel hexagon
 
    pixel :: (Int,Int) -> Draw
-   pixel (x,y) = c %.< cell chr # clr
+   pixel (x,y) = c %.< cell chr # rgbColor clr
       where
 
       v :: View
@@ -76,32 +76,33 @@ plane st = hcat [hex,ui]
       a = maybe void id $ atoms v IntMap.!? fromIntegral (zlevel st)
 
       viewbase :: Bool = ta == void
-      selected :: Bool = zlevel st == tz && n == fi
+      selected :: Bool = n == fi && zlevel st == tz
+      overvoid :: Bool = n == fi && not (visible a)
       adjacent :: Bool = zlevel st == tz && n ∈ fis
       targeted :: Bool = IntSet.member n (targets st)
 
-      overvoid :: Bool = n == fi && not (visible a)
 
       chr :: Char
       chr
-         | edit st , overvoid = 'o'
+         | edit st , overvoid                   = 'o'
          | edit st , targeted , not (visible a) = 'o'
-         | edit st , targeted = atom_chr a
-         | visible ta = atom_chr ta
-         | viewbase  = '∙'
-         | otherwise = ' '
+         | edit st , targeted                   = atom_chr a
+         | viewbase                             = '∙'
+         | otherwise                            = atom_chr ta
 
-      clr :: Draw
-         | edit st , targeted = rgbColor $ blink (white pastel) go
-         | otherwise = rgbColor go
+      clr :: Colour Float
+         | edit st , targeted , selected = blink (white k) $ blend 1   k_pointer go
+         | edit st            , selected =                   blend 1   k_pointer go
+         | edit st , targeted , adjacent = blink (white k) $ blend 0.5 k_pointer go
+         | edit st            , adjacent =                   blend 0.5 k_pointer go
+         | edit st , targeted            = blink (white k)                       go
+         | otherwise                     =                                       go
          where
          go
-            | edit st , overvoid       = white pastel
-            |           viewbase       = fog $ blend 0.05 (white pastel) termBG
-            | edit st , selected       = white pastel
-            | edit st , adjacent       = blend 0.1 (white pastel) $ atom_clr ta
-            | edit st , zlevel st > tz = fog $ grey
-            | not (play st)            = fog $ blend 0.7 grey (white pastel)
+            | edit st , overvoid       = k_pointer
+            |           viewbase       = fog $ blend 0.05 (white k) termBG
+            | edit st , zlevel st > tz = fog $ blend 0.1 (white k) termBG
+            | not (play st)            = fog $ blend 0.3 (white k) termBG
             | otherwise                = fog $ atom_clr ta
 
       fog :: Colour Float -> Colour Float
@@ -116,9 +117,10 @@ plane st = hcat [hex,ui]
 
    info :: Plane
       | edit st = word $ unwords
-         [ "z" <> show (zlevel st)  -- current z level
-      -- , show $ fi
+         [ pure $ atom_chr (void { unit = Just (Unit (Building (q_structure st) (q_material st)) L0 mempty) })
          , string $ Building (q_structure st) (q_material st)  -- selected building
+      -- , show (zlevel st)  -- current z level
+      -- , show $ fi
          ]
       | play st = word "|>"
       | otherwise = word "||"
@@ -135,7 +137,7 @@ plane st = hcat [hex,ui]
          ]
       | otherwise = canvas
 
-   -- | Color animation
+   -- | Animation
 
    blink :: Colour Float -> Colour Float -> Colour Float
    blink = blend (abs $ fromInteger (steps - x) / fromInteger steps)
@@ -147,15 +149,15 @@ plane st = hcat [hex,ui]
 termBG :: Colour Float
 termBG = sRGB24 0x22 0x22 0x22 -- | Useful grey tone
 
-grey :: Colour Float
-grey = blend 0.1 (white pastel) termBG
+-- grey :: Colour Float
+-- grey = blend 0.1 (white k) termBG
 
 -- | Color blending
 
 fade :: Word -> Colour Float -> Colour Float
-fade l k = (grade <$> steps) !! fromEnum l
+fade l c = (grade <$> steps) !! fromEnum l
    where
-   grade x = blend x termBG k
+   grade x = blend x termBG c
    steps = [0,0.50,0.80,0.95,1] <> repeat 1
 
 -- | Atoms
@@ -171,17 +173,29 @@ atom_chr a
 atom_clr :: Atom -> Colour Float
 atom_clr a
 
-   | Nothing    <- material a = grey
-   | Just Dirt  <- material a = sRGB24 0xcc 0x99 0x00
-   | Just Wood  <- material a = sRGB24 0x60 0x30 0x00
-   | Just Stone <- material a = sRGB24 0x16 0x16 0x16
-   | Just Metal <- material a = sRGB24 0x30 0x30 0x60
-   | otherwise                = sRGB24 0x00 0x30 0x30
+   | Nothing    <- material a = grey k
+   | Just Dirt  <- material a = yellow k
+   | Just Wood  <- material a = orange k
+   | Just Stone <- material a = grey k
+   | Just Metal <- material a = purple k
+   | otherwise                = red k
 
 -- | Colors
 
+k :: Palette
+k = pastel
+
+k2 :: Palette
+k2 = kd
+
+k_pointer :: Colour Float
+k_pointer = sRGB24 0x00 0xcc 0xff
+
+rose :: Colour Float = sRGB24 0xff 0x00 0x7f
+
 data Palette = K8
    { white :: Colour Float
+   , grey :: Colour Float
    , red :: Colour Float
    , orange :: Colour Float
    , yellow :: Colour Float
@@ -189,11 +203,17 @@ data Palette = K8
    , cyan :: Colour Float
    , blue :: Colour Float
    , purple :: Colour Float
+   } | KD
+   { kd_r :: Bool -> Colour Float
+   , kd_y :: Bool -> Colour Float
+   , kd_g :: Bool -> Colour Float
+   , kd_b :: Bool -> Colour Float
    }
 
 pastel :: Palette
 pastel = K8
    { white = sRGB24 0xff 0xff 0xff
+   , grey = sRGB24 0x30 0x30 0x30
    , red = sRGB24 0xce 0x65 0x64
    , orange = sRGB24 0xe0 0x93 0x5a
    , yellow = sRGB24 0xf1 0xc7 0x6e
@@ -201,4 +221,12 @@ pastel = K8
    , cyan = sRGB24 0x88 0xbe 0xb7
    , blue = sRGB24 0x80 0xa2 0xbf
    , purple = sRGB24 0xb3 0x93 0xbc
+   }
+
+kd :: Palette
+kd = KD
+   { kd_r = \d -> if d then sRGB24 0xde 0x32 0x14 else sRGB24 0xe3 0x50 0x07
+   , kd_y = \d -> if d then sRGB24 0xf1 0x9e 0x00 else sRGB24 0xf4 0xba 0x00
+   , kd_g = \d -> if d then sRGB24 0x00 0xae 0x79 else sRGB24 0x59 0xbb 0x81
+   , kd_b = \d -> if d then sRGB24 0x00 0x92 0xc1 else sRGB24 0x00 0xa1 0xdf
    }
