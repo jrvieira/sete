@@ -80,21 +80,21 @@ plane st = hcat [hex,ui]
       adjacent :: Bool = zlevel st == tz && n ∈ fis
       targeted :: Bool = IntSet.member n (targets st)
 
-      inopaque :: Bool = n == fi && not (visible a)
+      overvoid :: Bool = n == fi && not (visible a)
 
       chr :: Char
       chr
-         -- invisible focused atom
-         | edit st , inopaque = 'x'
+         | edit st , overvoid = 'x'
+         | edit st , targeted , not (visible a) = 'x'
+         | edit st , targeted = atom_chr a
          | visible ta = atom_chr ta
          | viewbase  = '∙'
          | otherwise = ' '
 
       clr :: Draw
-
-         | edit st , inopaque       = rgbColor white
-         |           viewbase       = rgbColor $ fog $ blend 0.05 white termBG
          | edit st , targeted       = rgbColor white
+         | edit st , overvoid       = rgbColor white
+         |           viewbase       = rgbColor $ fog $ blend 0.05 white termBG
          | edit st , selected       = rgbColor white
          | edit st , adjacent       = rgbColor $ mix 1 white $ atom_clr ta
          | edit st , zlevel st > tz = rgbColor $ fog $ grey

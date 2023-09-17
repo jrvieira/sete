@@ -11,7 +11,7 @@ import Terminal.Game
 
 import Data.Char ( toLower )
 import Data.IntMap qualified as IntMap ( (!) )
-import Data.IntSet qualified as IntSet ( member, insert, delete )
+import Data.IntSet qualified as IntSet ( member, insert, delete, map )
 
 main :: IO ()
 main = do
@@ -67,14 +67,14 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
 
       -- scroll
 
-      | 'h' <- toLower k                                           = st { center = move 1 H (center st) , focus = move 1 H (focus st) }
-      | 'j' <- toLower k                                           = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
-      | 'k' <- toLower k                                           = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
-      | 'l' <- toLower k                                           = st { center = move 1 L (center st) , focus = move 1 L (focus st) }
-      | 'u' <- toLower k                                           = st { center = move 1 U (center st) , focus = move 1 U (focus st) }
-      | 'i' <- toLower k                                           = st { center = move 1 I (center st) , focus = move 1 I (focus st) }
-      | 'n' <- toLower k                                           = st { center = move 1 N (center st) , focus = move 1 N (focus st) }
-      | 'm' <- toLower k                                           = st { center = move 1 M (center st) , focus = move 1 M (focus st) }
+      | 'h' <- toLower k                                           = st { center = move 1 H (center st) , focus = move 1 H (focus st) , targets = IntSet.map (move 1 H) (targets st) }
+      | 'j' <- toLower k                                           = st { center = move 1 N (center st) , focus = move 1 N (focus st) , targets = IntSet.map (move 1 N) (targets st) }
+      | 'k' <- toLower k                                           = st { center = move 1 I (center st) , focus = move 1 I (focus st) , targets = IntSet.map (move 1 I) (targets st) }
+      | 'l' <- toLower k                                           = st { center = move 1 L (center st) , focus = move 1 L (focus st) , targets = IntSet.map (move 1 L) (targets st) }
+      | 'u' <- toLower k                                           = st { center = move 1 U (center st) , focus = move 1 U (focus st) , targets = IntSet.map (move 1 U) (targets st) }
+      | 'i' <- toLower k                                           = st { center = move 1 I (center st) , focus = move 1 I (focus st) , targets = IntSet.map (move 1 I) (targets st) }
+      | 'n' <- toLower k                                           = st { center = move 1 N (center st) , focus = move 1 N (focus st) , targets = IntSet.map (move 1 N) (targets st) }
+      | 'm' <- toLower k                                           = st { center = move 1 M (center st) , focus = move 1 M (focus st) , targets = IntSet.map (move 1 M) (targets st) }
 
       -- target
 
