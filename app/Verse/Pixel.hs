@@ -84,24 +84,24 @@ plane st = hcat [hex,ui]
 
       chr :: Char
       chr
-         | edit st , overvoid = 'x'
-         | edit st , targeted , not (visible a) = 'x'
+         | edit st , overvoid = 'o'
+         | edit st , targeted , not (visible a) = 'o'
          | edit st , targeted = atom_chr a
          | visible ta = atom_chr ta
          | viewbase  = '∙'
          | otherwise = ' '
 
       clr :: Draw
-         | edit st , targeted = rgbColor $ blink white go
+         | edit st , targeted = rgbColor $ blink (white pastel) go
          | otherwise = rgbColor go
          where
          go
-            | edit st , overvoid       = white
-            |           viewbase       = fog $ blend 0.05 white termBG
-            | edit st , selected       = white
-            | edit st , adjacent       = blend 0.5 white $ atom_clr ta
+            | edit st , overvoid       = white pastel
+            |           viewbase       = fog $ blend 0.05 (white pastel) termBG
+            | edit st , selected       = white pastel
+            | edit st , adjacent       = blend 0.1 (white pastel) $ atom_clr ta
             | edit st , zlevel st > tz = fog $ grey
-            | not (play st)            = fog $ blend 0.7 grey white
+            | not (play st)            = fog $ blend 0.7 grey (white pastel)
             | otherwise                = fog $ atom_clr ta
 
       fog :: Colour Float -> Colour Float
@@ -147,11 +147,8 @@ plane st = hcat [hex,ui]
 termBG :: Colour Float
 termBG = sRGB24 0x22 0x22 0x22 -- | Useful grey tone
 
-white :: Colour Float
-white = sRGB24 0xff 0xff 0xff
-
 grey :: Colour Float
-grey = blend 0.1 white termBG
+grey = blend 0.1 (white pastel) termBG
 
 -- | Color blending
 
@@ -181,3 +178,27 @@ atom_clr a
    | Just Metal <- material a = sRGB24 0x30 0x30 0x60
    | otherwise                = sRGB24 0x00 0x30 0x30
 
+-- | Colors
+
+data Palette = K8
+   { white :: Colour Float
+   , red :: Colour Float
+   , orange :: Colour Float
+   , yellow :: Colour Float
+   , green :: Colour Float
+   , cyan :: Colour Float
+   , blue :: Colour Float
+   , purple :: Colour Float
+   }
+
+pastel :: Palette
+pastel = K8
+   { white = sRGB24 0xff 0xff 0xff
+   , red = sRGB24 0xce 0x65 0x64
+   , orange = sRGB24 0xe0 0x93 0x5a
+   , yellow = sRGB24 0xf1 0xc7 0x6e
+   , green = sRGB24 0xb5 0xbe 0x63
+   , cyan = sRGB24 0x88 0xbe 0xb7
+   , blue = sRGB24 0x80 0xa2 0xbf
+   , purple = sRGB24 0xb3 0x93 0xbc
+   }
