@@ -73,8 +73,8 @@ move n d i
 -- each unit should have a material cost
 -- n of that material should be present in the Atom (do a items check)
 -- build if possible, don't if not
-add :: Unit -> Int -> Word -> Verse -> Verse
-add u k z
+add :: Unit -> Word -> Int -> Verse -> Verse
+add u z k
    | False = id  -- check raw materials
    | otherwise = IntMap.adjust (first $ go z) k
    where
@@ -82,16 +82,16 @@ add u k z
    go i [] = replicate (fromIntegral i) void <> [Atom { unit = Just u , items = mempty , elements = mempty }]
    go i (a:as) = a : go (pred i) as
 
-del :: Int -> Word -> Verse -> Verse
-del k z = IntMap.adjust (first $ go z) k
+del :: Word -> Int -> Verse -> Verse
+del z k = IntMap.adjust (first $ go z) k
    where
    go :: Word -> [Atom] -> [Atom]
    go _ [] = []
    go 0 (_:as) = void : as
    go i (a:as) = a : go (pred i) as
 
-upd :: (Atom -> Atom) -> Int -> Word -> Verse -> Verse
-upd f k z = undefined
+upd :: (Atom -> Atom) -> Word -> Int -> Verse -> Verse
+upd f z k = undefined
 
 -- Atom
 

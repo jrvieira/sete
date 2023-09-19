@@ -11,7 +11,7 @@ import Terminal.Game
 
 import Data.Char ( toLower )
 import Data.IntMap qualified as IntMap ( (!) )
-import Data.IntSet qualified as IntSet ( member, insert, delete, map )
+import Data.IntSet qualified as IntSet ( member, insert, delete, map, elems )
 
 main :: IO ()
 main = do
@@ -89,10 +89,16 @@ logic _ st (KeyPress k) = Right $ st' { input = k }
       | '}' <- k , edit st                                         = st { q_material  = forw (q_material st) }
       | '{' <- k , edit st                                         = st { q_material  = back (q_material st) }
 
-      | 'q' <- k , edit st                                         = st { ν = add (Unit (Building (q_structure st) (q_material st)) L0 mempty) (focus st) (zlevel st) (ν st) }
-      | 'Q' <- k , edit st                                         = st { ν = del                                                              (focus st) (zlevel st) (ν st) }
+      | 'q' <- k , edit st                                         = st { ν = add q (zlevel st) (focus st) (ν st) }
+      | 'x' <- k , edit st                                         = st { ν = del   (zlevel st) (focus st) (ν st) }
+      | 'Q' <- k , edit st                                         = st { ν = foldr (.) id (add q (zlevel st) <$> IntSet.elems (targets st)) (ν st) }
+      | 'X' <- k , edit st                                         = st { ν = foldr (.) id (del   (zlevel st) <$> IntSet.elems (targets st)) (ν st) }
 
       -- none
 
       | otherwise                                                  = st
+
+      where
+
+      q = Unit (Building (q_structure st) (q_material st)) L0 mempty
 
