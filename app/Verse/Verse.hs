@@ -15,13 +15,11 @@ import Data.IntMap qualified as IntMap ( fromList, adjust )
 
 type Node a = (a,Edge Int)
 
-type Verse = IntMap (Node [Atom])
-
-verse :: [[Atom]] -> Verse
-verse as = IntMap.fromList $ take (Setup.width * Setup.height) $ map n $ zip [0..] (as <> repeat [])
+verse :: [[Atom]] -> IntMap (Node [Atom])
+verse as = IntMap.fromList $ take (Setup.width * Setup.height) $ zipWith n [0..] (as <> repeat [])
    where
-   n :: (Int,[Atom]) -> (Int,Node [Atom])
-   n (ix,a) = (ix,(a,Edge u i h l n m))
+   n :: Int -> [Atom] -> (Int,Node [Atom])
+   n ix a = (ix,(a,Edge u i h l n m))
       where
       [u,i,h,l,n,m] = ($ ix) . move 1 <$> total
 
@@ -49,7 +47,7 @@ edge d (Edge u i h l n m)
    | M <- d = m
 
 data Dir = U | I | H | L | N | M
-   deriving ( Eq, Ord, Enum, Bounded )
+   deriving ( Eq, Ord, Enum, Bounded, Show )
 
 move :: Int -> Dir -> Int -> Int
 move n d i
@@ -72,44 +70,47 @@ move n d i
 -- TODO:
 -- each unit should have a material cost
 -- n of that material should be present in the Atom (do a items check)
--- build if possible, don't if not
-add :: Unit -> Word -> Int -> Verse -> Verse
+-- build if possible otherwise dont
+add :: Unit -> Word -> Int -> IntMap (Node [Atom]) -> IntMap (Node [Atom])
 add u z k
    | False = id  -- check raw materials
    | otherwise = IntMap.adjust (first $ go z) k
    where
    go 0 (a:as) = a { unit = Just u {- , items = subtract recipe -} } : as
-   go i [] = replicate (fromIntegral i) void <> [Atom { unit = Just u , items = mempty , elements = mempty }]
+   go i [] = replicate (fromIntegral i) void <> [Atom { unit = Just u , actor = Nothing , items = mempty , elements = mempty }]
    go i (a:as) = a : go (pred i) as
 
-del :: Word -> Int -> Verse -> Verse
-del z k = IntMap.adjust (first $ go z) k
+del :: Word -> Int -> IntMap (Node [Atom]) -> IntMap (Node [Atom])
+del z = IntMap.adjust (first $ go z)
    where
    go :: Word -> [Atom] -> [Atom]
    go _ [] = []
    go 0 (_:as) = void : as
    go i (a:as) = a : go (pred i) as
 
-upd :: (Atom -> Atom) -> Word -> Int -> Verse -> Verse
+upd :: (Atom -> Atom) -> Word -> Int -> IntMap (Node [Atom]) -> IntMap (Node [Atom])
 upd f z k = undefined
 
 -- Atom
 
-data Atom = Atom {
-   unit :: Maybe Unit ,
-   items :: Map Item Word ,
-   elements :: Map Element Level }
-   deriving ( Show, Eq )
+data Atom = Atom
+   { unit :: Maybe Unit
+   , actor :: Maybe Actor
+   , items :: Map Item Word
+   , elements :: Map Element Level
+   } deriving ( Show, Eq )
 
 base :: View
 base = View {
    atoms = mempty }
 
 void :: Atom
-void = Atom {
-   unit = Nothing ,
-   items = mempty ,
-   elements = mempty }
+void = Atom
+   { unit = Nothing
+   , actor = Nothing
+   , items = mempty
+   , elements = mempty
+   }
 
 -- atomic lenses
 
@@ -171,12 +172,12 @@ instance Num Level where
 --    randomR (a,b) g = let (r,g') = randomR (fromEnum a , fromEnum b) g in (toEnum r , g')
 
 data Element = Fire | Water | Light | Radio
-   deriving (Eq, Ord, Show)
+   deriving ( Eq, Ord, Show )
 
 data Form = Gas | Liquid | Solid | Plasma
 
 data Property = Perms | Burns | Float | Fixed | Holds | Block | Toxic | Fatal
-   deriving (Eq, Ord, Show)
+   deriving ( Eq, Ord, Show )
 -- perms :: a -> Bool  -- lets water through
 -- burns :: a -> Bool  -- flammable
 -- float :: a -> Bool  -- floats above water
@@ -187,9 +188,14 @@ data Property = Perms | Burns | Float | Fixed | Holds | Block | Toxic | Fatal
 -- toxic :: a -> Bool  -- harms life
 -- fatal :: a -> Bool  -- kills life
 
--- Entities live in a IntMap [Entity] that is calculated after
-data Entity = Cat | Bird
-   deriving Show
+data Entity = Train | Cat | Bird
+   deriving ( Eq, Show )
+
+data Actor = Actor
+   { entity :: Entity
+   , dir :: Maybe Dir
+   , carry :: IntMap Item
+   } deriving ( Eq, Show )
 
 -- Atoms have units
 -- Units have buildings
@@ -206,7 +212,7 @@ data Structure = Path | Wall | Track | Bridge | Table | Art | House
 data Building = Building Structure Material
    deriving ( Show, Eq )
 
--- L0 is completely broken
+-- L0 means completely broken
 -- properties dictate atom behaviour (holds, block, ...)
 data Unit = Unit Building Level (Set Property)
    deriving ( Show, Eq )
@@ -269,5 +275,16 @@ instance Product Item where
    recipe Book                       = Map.fromList [(Raw Wood,1),(Paper,1)]
    recipe Box                        = Map.fromList []
    recipe Paper                      = Map.fromList [(Raw Wood,1)]
+   recipe _                          = Map.fromList []
+
+instance Product Entity where
+
+   string Train                      = "Train"
+   string Cat                        = "Cat"
+   string Bird                       = "Bird"
+   string _                          = "unspecified entity"
+
+   detail i                          = unwords ["regular",string i]
+
    recipe _                          = Map.fromList []
 

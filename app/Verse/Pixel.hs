@@ -1,4 +1,7 @@
-module Verse.Pixel where
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use camelCase" #-}
+
+module Verse.Pixel ( plane ) where
 
 import Zero hiding ( (#) )
 
@@ -8,7 +11,6 @@ import Verse.Verse
 
 import Terminal.Game
 
-import Data.Char ( toLower )
 import Data.IntMap qualified as IntMap ( (!), (!?) )
 import Data.IntSet qualified as IntSet ( member )
 import Data.Colour ( blend )
@@ -108,11 +110,6 @@ plane st = hcat [hex,ui]
       fog :: Colour Float -> Colour Float
       fog = fade (zlevel st - tz)
 
-   -- | Entities  ( todo )
-
-   ents :: Plane
-   ents = word "<ents>"
-
    -- | UI rendering
 
    info :: Plane
@@ -128,12 +125,16 @@ plane st = hcat [hex,ui]
    ui :: Plane
       | edit st = canvas
       & (1,1) % vcat
-         [ word (toLower <$> unwords [ pure $ atom_chr fa {--, maybe "" show $ material $ fa , maybe "" show $ structure $ fa --}]) # rgbColor (atom_clr fa)
-         , word $ unwords [ maybe "" string $ building fa ]
+         [ hcat
+            [ word (pure $ atom_chr fa) # rgbColor (atom_clr fa)
+            , word " "
+            , word $ maybe "" string $ building fa
+            ]
       -- , word ""
       -- , textBoxLiquid Setup.width (show fv)
+         , textBoxLiquid Setup.width (maybe "" detail $ building fa) # rgbColor (grey k)
          , word ""
-         , textBoxLiquid Setup.width $ maybe "" detail $ building fa
+      -- , word $ maybe "" (unwords . map string) $ sign st IntMap.!? fi
          ]
       | otherwise = canvas
 

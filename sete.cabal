@@ -26,7 +26,7 @@ executable sete
       , Verse.Pixel
 
    -- other-extensions:
-   build-depends: base ^>=4.18.0.0
+   build-depends: base
       , zero
       , ansi-terminal-game
       , containers

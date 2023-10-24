@@ -13,15 +13,11 @@ step :: State -> State
 step st = st { δ = δ st + 1 , ν = ν' , view = view' }
    where
 
-   -- type Node a = (a,Edge Int)
-   -- type Verse = IntMap (Node [Atom])
-   -- ν st :: Verse
-
    -- run the simulation through each Node accumulating all Views and Nodes
    (view',ν') :: (IntMap View,IntMap (Node [Atom]))
-      = foldrWithKey sim (mempty,mempty) (ν st)
+      = foldrWithKey sim mempty (ν st)
 
-   sim :: Int -> Node [Atom] -> (IntMap View,Verse) -> (IntMap View,Verse)
+   sim :: Int -> Node [Atom] -> (IntMap View,IntMap (Node [Atom])) -> (IntMap View,IntMap (Node [Atom]))
    sim k (as,e) = bimap (insert k v) (insert k (as',e))
       where
 
@@ -52,7 +48,8 @@ step st = st { δ = δ st + 1 , ν = ν' , view = view' }
       -- This needs some work
       -- updated atom
       a' :: Atom
-         | play st = a  -- update things
+         | False <- play st = a
+      -- | Just Track <- structure a = a  -- check if any adjacent track has a one and only one train going in this direction
          | otherwise = a
 
       adj :: Edge Atom
