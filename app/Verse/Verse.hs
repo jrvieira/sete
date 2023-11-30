@@ -206,7 +206,7 @@ data Actor = Actor
 data Material = Dirt | Wood | Stone | Metal
    deriving ( Eq, Enum, Bounded, Ord, Show )
 
-data Structure = Path | Wall | Track | Bridge | Table | Art | House
+data Structure = Path | Pipe | Wall | Track | Bridge | Table | Art | House
    deriving ( Eq, Enum, Bounded, Show )
 
 data Building = Building Structure Material
